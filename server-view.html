@@ -398,6 +398,24 @@
             background: #ffffff;
             color: #000000;
         }
+
+        .genre-input {
+            width: 100%;
+            padding: 8px;
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .genre-input:focus {
+            outline: none;
+            border-color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -461,6 +479,18 @@
         </div>
 
         <div class="control-group">
+            <label>NUMBER OF RINGS</label>
+            <input type="range" id="num-rings" min="1" max="20" value="5" step="1">
+            <div class="value-display"><span id="num-rings-value">5</span> rings</div>
+        </div>
+
+        <div class="control-group">
+            <label>RING WIDTH</label>
+            <input type="range" id="ring-width" min="1" max="10" value="4" step="1">
+            <div class="value-display"><span id="ring-width-value">4</span>px</div>
+        </div>
+
+        <div class="control-group">
             <div class="toggle-button active" id="pulse-toggle">
                 <span>PULSE</span>
                 <div class="status">ON</div>
@@ -478,6 +508,13 @@
             <div class="toggle-button active" id="fill-toggle">
                 <span>CIRCLE FILL</span>
                 <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button" id="solid-fill-toggle">
+                <span>SOLID FILL (NO RINGS)</span>
+                <div class="status">OFF</div>
             </div>
         </div>
 
@@ -515,6 +552,26 @@
                 <span>HAMBURGER RINGS</span>
                 <div class="status">ON</div>
             </div>
+        </div>
+
+        <h3 style="margin-top: 30px;">GENRE CONFIGURATION</h3>
+
+        <div class="control-group">
+            <label>EDIT GENRES (Press Enter to Apply)</label>
+            <input type="text" id="genre-0" class="genre-input" placeholder="Genre 1" maxlength="35">
+            <input type="text" id="genre-1" class="genre-input" placeholder="Genre 2" maxlength="35">
+            <input type="text" id="genre-2" class="genre-input" placeholder="Genre 3" maxlength="35">
+            <input type="text" id="genre-3" class="genre-input" placeholder="Genre 4" maxlength="35">
+            <input type="text" id="genre-4" class="genre-input" placeholder="Genre 5" maxlength="35">
+            <input type="text" id="genre-5" class="genre-input" placeholder="Genre 6" maxlength="35">
+            <input type="text" id="genre-6" class="genre-input" placeholder="Genre 7" maxlength="35">
+            <input type="text" id="genre-7" class="genre-input" placeholder="Genre 8" maxlength="35">
+        </div>
+
+        <div class="control-group">
+            <button id="apply-genres" style="width: 100%; padding: 10px; background: #ffffff; color: #000000; border: none; border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">
+                APPLY GENRES
+            </button>
         </div>
 
         <h3 style="margin-top: 30px;">LYRIA MUSIC</h3>
@@ -793,7 +850,7 @@
                 try {
                     const geminiClient = new GoogleGenerativeAI(apiKey);
                     window.geminiModel = geminiClient.getGenerativeModel({
-                        model: 'gemini-2.0-flash-exp'
+                        model: 'models/gemini-flash-latest'
                     });
                     console.log('Gemini Flash initialized for prompt generation');
                 } catch (flashError) {
@@ -858,10 +915,11 @@
 
         // Generate sophisticated prompt using Gemini Flash
         async function generateLyriaPrompt(percentages) {
-            const genres = ['techno', 'electro', 'jazz', 'hip hop', 'classical', 'house'];
+            // Use the current dynamic genres (convert to lowercase for prompts)
+            const genresForPrompt = genres.map(g => g.toLowerCase());
             
             // Build genre distribution text
-            const genreList = genres
+            const genreList = genresForPrompt
                 .map((genre, i) => percentages[i] > 5 ? `${Math.round(percentages[i])}% ${genre}` : null)
                 .filter(x => x)
                 .join(', ');
@@ -904,11 +962,11 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
 
             // Fallback: simple weighted prompts
             const weightedPrompts = [];
-            for (let i = 0; i < genres.length; i++) {
+            for (let i = 0; i < genresForPrompt.length; i++) {
                 if (percentages[i] > 5) {
                     const weight = percentages[i] / 100;
                     weightedPrompts.push({
-                        text: `${genres[i]} with deep rhythmic patterns and atmospheric elements`,
+                        text: `${genresForPrompt[i]} with deep rhythmic patterns and atmospheric elements`,
                         weight: weight
                     });
                 }
@@ -927,7 +985,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             // Check if weights have changed significantly (>5% change)
             if (window.lastGenreWeights) {
                 let maxChange = 0;
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < 8; i++) {
                     const change = Math.abs(percentages[i] - window.lastGenreWeights[i]);
                     if (change > maxChange) maxChange = change;
                 }
@@ -1025,16 +1083,77 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             playerCountElement.textContent = Object.keys(players).length;
         });
 
-        // Music genres
-        const genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE'];
+        // Music genres - will be updated from server
+        let genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
+
+        // Listen for genre updates from server
+        socket.on('genresUpdate', (newGenres) => {
+            genres = newGenres;
+            console.log('Genres updated:', genres);
+            
+            // Update genre input fields
+            for (let i = 0; i < 8; i++) {
+                document.getElementById(`genre-${i}`).value = genres[i];
+            }
+        });
+
+        // Initialize genre input fields with current genres
+        for (let i = 0; i < 8; i++) {
+            document.getElementById(`genre-${i}`).value = genres[i];
+        }
+
+        // Genre editing functionality
+        const applyGenresBtn = document.getElementById('apply-genres');
+        const genreInputs = document.querySelectorAll('.genre-input');
+
+        function applyGenres() {
+            const newGenres = [];
+            let allFilled = true;
+            
+            genreInputs.forEach((input, index) => {
+                const value = input.value.trim().toUpperCase();
+                if (value.length === 0) {
+                    allFilled = false;
+                } else {
+                    newGenres.push(value);
+                }
+            });
+            
+            if (!allFilled || newGenres.length !== 8) {
+                alert('Please fill all 8 genre fields');
+                return;
+            }
+            
+            // Send to server
+            socket.emit('updateGenres', newGenres);
+            
+            // Visual feedback
+            applyGenresBtn.textContent = '✓ GENRES APPLIED';
+            setTimeout(() => {
+                applyGenresBtn.textContent = 'APPLY GENRES';
+            }, 2000);
+            
+            console.log('Applied genres:', newGenres);
+        }
+
+        applyGenresBtn.addEventListener('click', applyGenres);
+
+        // Allow Enter key to apply genres
+        genreInputs.forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    applyGenres();
+                }
+            });
+        });
         
         // Store animated percentages
-        const genrePercentages = [0, 0, 0, 0, 0, 0];
-        const targetPercentages = [0, 0, 0, 0, 0, 0];
+        const genrePercentages = [0, 0, 0, 0, 0, 0, 0, 0];
+        const targetPercentages = [0, 0, 0, 0, 0, 0, 0, 0];
         
         // Calculate which genre section a player is in
         function getPlayerGenre(x, y) {
-            const cols = 3;
+            const cols = 4;
             const rows = 2;
             const sectionWidth = canvas.width / cols;
             const sectionHeight = canvas.height / rows;
@@ -1050,13 +1169,13 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         
         // Draw genre sections and dot grid background
         function drawGrid() {
-            const cols = 3;
+            const cols = 4;
             const rows = 2;
             const sectionWidth = canvas.width / cols;
             const sectionHeight = canvas.height / rows;
             
             // Count players in each genre
-            const genreCounts = [0, 0, 0, 0, 0, 0];
+            const genreCounts = [0, 0, 0, 0, 0, 0, 0, 0];
             let totalPlayers = 0;
             
             for (const id in players) {
@@ -1105,26 +1224,48 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                     // Draw genre label in upper left corner (offset for UI bar if top row)
                     const labelY = row === 0 ? y + 70 : y + 20;
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = '14px "Roboto Mono", monospace';
+                    ctx.font = '24px Helvetica, Arial, sans-serif';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(genres[genreIndex], x + 35, labelY); // Offset for bar
+                    ctx.fillText(genres[genreIndex].toLowerCase(), x + 35, labelY); // Offset for bar
                     
                     // Draw percentage text
-                    ctx.font = '10px "Roboto Mono", monospace';
-                    ctx.fillText(`${Math.round(genrePercentages[genreIndex])}%`, x + 35, labelY + 18);
+                    ctx.font = '14px Helvetica, Arial, sans-serif';
+                    ctx.fillText(`${Math.round(genrePercentages[genreIndex])}%`, x + 35, labelY + 28);
                 }
             }
             
-            // Draw dot grid
+            // Draw dot grid with magnetic field effect
             const gridSize = 50;
             const dotSize = 2;
+            const magneticStrength = 60; // How far dots can be pulled
+            const magneticRadius = 200; // Radius of influence
+            
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
 
-            for (let x = 0; x <= canvas.width; x += gridSize) {
-                for (let y = 0; y <= canvas.height; y += gridSize) {
+            for (let gx = 0; gx <= canvas.width; gx += gridSize) {
+                for (let gy = 0; gy <= canvas.height; gy += gridSize) {
+                    let offsetX = 0;
+                    let offsetY = 0;
+                    
+                    // Calculate displacement from all players
+                    for (const id in players) {
+                        const player = players[id];
+                        const dx = player.position.x - gx;
+                        const dy = player.position.y - gy;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < magneticRadius && dist > 0) {
+                            // Attraction force (inverse square law with smoothing)
+                            const force = (1 - dist / magneticRadius) * magneticStrength;
+                            offsetX += (dx / dist) * force;
+                            offsetY += (dy / dist) * force;
+                        }
+                    }
+                    
+                    // Draw dot at displaced position
                     ctx.beginPath();
-                    ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                    ctx.arc(gx + offsetX, gy + offsetY, dotSize, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
@@ -1168,6 +1309,8 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
 
         // Settings
         let circleRadius = 60;
+        let numRings = 5;
+        let ringWidth = 4;
         let pulseEnabled = true;
         let linesEnabled = false;
         let fillEnabled = true;
@@ -1203,6 +1346,24 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             circleScaleValue.textContent = circleRadius;
         });
 
+        // Number of rings control
+        const numRingsInput = document.getElementById('num-rings');
+        const numRingsValue = document.getElementById('num-rings-value');
+        
+        numRingsInput.addEventListener('input', (e) => {
+            numRings = parseInt(e.target.value);
+            numRingsValue.textContent = numRings;
+        });
+
+        // Ring width control
+        const ringWidthInput = document.getElementById('ring-width');
+        const ringWidthValue = document.getElementById('ring-width-value');
+        
+        ringWidthInput.addEventListener('input', (e) => {
+            ringWidth = parseInt(e.target.value);
+            ringWidthValue.textContent = ringWidth;
+        });
+
         // Pulse toggle
         const pulseToggle = document.getElementById('pulse-toggle');
         pulseToggle.addEventListener('click', () => {
@@ -1225,6 +1386,15 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             fillEnabled = !fillEnabled;
             fillToggle.classList.toggle('active');
             fillToggle.querySelector('.status').textContent = fillEnabled ? 'ON' : 'OFF';
+        });
+
+        // Solid fill toggle
+        let solidFillEnabled = false;
+        const solidFillToggle = document.getElementById('solid-fill-toggle');
+        solidFillToggle.addEventListener('click', () => {
+            solidFillEnabled = !solidFillEnabled;
+            solidFillToggle.classList.toggle('active');
+            solidFillToggle.querySelector('.status').textContent = solidFillEnabled ? 'ON' : 'OFF';
         });
 
         // Outline toggle
@@ -1561,20 +1731,32 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                     const pulsedSize = circleRadius + pulseAmount;
                     const shape = player.shape || 'circle';
                     
-                    ctx.fillStyle = '#ffffff';
-                    
                     if (shape === 'circle') {
-                        ctx.beginPath();
-                        ctx.arc(player.position.x, player.position.y, pulsedSize, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        if (outlineEnabled) {
+                        if (solidFillEnabled) {
+                            // Draw solid white filled circle
+                            ctx.fillStyle = '#ffffff';
+                            ctx.beginPath();
+                            ctx.arc(player.position.x, player.position.y, pulsedSize, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else {
+                            // Draw concentric rings getting smaller towards center using dynamic values
+                            const ringGap = 8; // Gap between rings
+                            
                             ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 3;
-                            ctx.stroke();
+                            ctx.lineWidth = ringWidth;
+                            
+                            for (let ring = 0; ring < numRings; ring++) {
+                                const ringRadius = pulsedSize - (ring * (pulsedSize / numRings)) - (ring * ringGap);
+                                // Skip rings that are too small to be visible (performance optimization)
+                                if (ringRadius > 2) {
+                                    ctx.beginPath();
+                                    ctx.arc(player.position.x, player.position.y, ringRadius, 0, Math.PI * 2);
+                                    ctx.stroke();
+                                }
+                            }
                         }
-                        ctx.closePath();
                     } else if (shape === 'square') {
+                        ctx.fillStyle = '#ffffff';
                         ctx.fillRect(
                             player.position.x - pulsedSize,
                             player.position.y - pulsedSize,
@@ -1593,6 +1775,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                             );
                         }
                     } else if (shape === 'triangle') {
+                        ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
                         ctx.moveTo(player.position.x, player.position.y - pulsedSize);
                         ctx.lineTo(player.position.x + pulsedSize, player.position.y + pulsedSize);

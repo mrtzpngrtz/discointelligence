@@ -26,6 +26,9 @@ app.get('/server-view', (req, res) => {
 const players = {};
 let playerCounter = 0;
 
+// Store genre configuration (can be changed at runtime)
+let genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
+
 // Physics constants
 const BALL_RADIUS = 30;
 const FRICTION = 0.95;
@@ -209,6 +212,9 @@ io.on('connection', (socket) => {
 
     // Send all players to the new connection (player or viewer)
     socket.emit('players', players);
+    
+    // Send current genres to the new connection
+    socket.emit('genresUpdate', genres);
 
     // Handle player name change
     socket.on('setName', (name) => {
@@ -255,6 +261,9 @@ io.on('connection', (socket) => {
                 player.position.x = Math.max(BALL_RADIUS, Math.min(BOUNDS.width - BALL_RADIUS, player.position.x));
                 player.position.y = Math.max(BALL_RADIUS, Math.min(BOUNDS.height - BALL_RADIUS, player.position.y));
             }
+            
+            // Broadcast bounds to all clients (including stats viewers)
+            io.emit('boundsUpdate', { width: BOUNDS.width, height: BOUNDS.height });
         }
     });
 
@@ -263,6 +272,17 @@ io.on('connection', (socket) => {
         console.log('Prompt update received:', prompt);
         // Broadcast to all clients (especially stats dashboard)
         io.emit('promptUpdate', prompt);
+    });
+
+    // Handle genre updates from server view
+    socket.on('updateGenres', (newGenres) => {
+        if (isViewer && Array.isArray(newGenres) && newGenres.length === 8) {
+            genres = newGenres.map(g => String(g).toUpperCase().trim());
+            console.log('Genres updated to:', genres);
+            
+            // Broadcast updated genres to all clients
+            io.emit('genresUpdate', genres);
+        }
     });
 
     // Handle player disconnect
