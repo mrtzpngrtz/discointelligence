@@ -16,6 +16,18 @@ A real-time multiplayer experience where players control shapes on their smartph
 
 ![Project Overview](screenshots/overview.png)
 
+## How It Works
+
+The system creates an interactive musical experience by combining real-time player interactions with AI-powered generative music:
+
+1. **Player Interaction Layer**: Multiple players control shapes on their mobile devices, with movements synchronized in real-time via Socket.IO WebSockets.
+
+2. **AI Analysis with Gemini Flash**: Player movements, positions, and interaction patterns are continuously analyzed by Google's Gemini Flash model, which interprets the spatial relationships, velocities, and collaborative behaviors.
+
+3. **Generative Music with Lyria**: Based on Gemini Flash's analysis, Google's Lyria music generation model creates dynamic, responsive music that reflects the current state of player interactions. The music evolves in real-time as players move and interact.
+
+4. **Real-time Feedback Loop**: The generated music influences player behavior, creating an emergent feedback system where human interaction and AI-generated sound continuously shape each other.
+
 ## Features
 
 - **Mobile View** (`/`): Shows only your own ball (red) with grid background
