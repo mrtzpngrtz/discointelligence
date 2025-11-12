@@ -10,6 +10,12 @@
 
 A real-time multiplayer experience where players control shapes on their smartphones, with a server view showing all players with customizable visual effects.
 
+**A prototype for interaction with real-time generative music.**
+
+## Screenshots
+
+![Project Overview](screenshots/overview.png)
+
 ## Features
 
 - **Mobile View** (`/`): Shows only your own ball (red) with grid background
