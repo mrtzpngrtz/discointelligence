@@ -16,6 +16,10 @@ A prototype for collective music generation where players influence real-time AI
 
 ![Project Overview](screenshots/overview.png)
 
+## Demo Video
+
+[![Watch Demo](https://img.youtube.com/vi/gp8PieAH7nk/0.jpg)](https://www.youtube.com/watch?v=gp8PieAH7nk)
+
 ## How It Works
 
 The system creates collective music generation through player distribution and AI interpretation:
