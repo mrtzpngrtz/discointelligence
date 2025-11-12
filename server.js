@@ -8,8 +8,10 @@ const io = require('socket.io')(http, {
     }
 });
 const path = require('path');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3000;
+const CONFIG_FILE = path.join(__dirname, 'config.json');
 
 // Serve static files
 app.use(express.static(__dirname));
@@ -26,8 +28,36 @@ app.get('/server-view', (req, res) => {
 const players = {};
 let playerCounter = 0;
 
-// Store genre configuration (can be changed at runtime)
-let genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
+// Load genres from config file or use defaults
+function loadGenres() {
+    try {
+        if (fs.existsSync(CONFIG_FILE)) {
+            const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+            if (config.genres && Array.isArray(config.genres) && config.genres.length === 8) {
+                console.log('Loaded genres from config.json');
+                return config.genres;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading config.json:', error);
+    }
+    // Return defaults if file doesn't exist or is invalid
+    return ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
+}
+
+// Save genres to config file
+function saveGenres(genresToSave) {
+    try {
+        const config = { genres: genresToSave };
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
+        console.log('Genres saved to config.json');
+    } catch (error) {
+        console.error('Error saving config.json:', error);
+    }
+}
+
+// Store genre configuration (loaded from file or defaults)
+let genres = loadGenres();
 
 // Physics constants
 const BALL_RADIUS = 30;
@@ -280,8 +310,24 @@ io.on('connection', (socket) => {
             genres = newGenres.map(g => String(g).toUpperCase().trim());
             console.log('Genres updated to:', genres);
             
+            // Save genres to config file
+            saveGenres(genres);
+            
             // Broadcast updated genres to all clients
             io.emit('genresUpdate', genres);
+        }
+    });
+
+    // Handle manual position update from server view
+    socket.on('updatePlayerPosition', (data) => {
+        if (players[data.playerId]) {
+            players[data.playerId].position = data.position;
+            // Reset velocity to zero when manually positioned
+            players[data.playerId].velocity = { x: 0, y: 0 };
+            console.log(`Updated position for player ${data.playerId}`);
+            
+            // Broadcast updated positions to all clients
+            io.emit('players', players);
         }
     });
 

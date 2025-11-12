@@ -1078,7 +1078,13 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             const filteredPlayers = {};
             for (const id in serverPlayers) {
                 if (id !== socket.id) {
-                    filteredPlayers[id] = serverPlayers[id];
+                    // Don't override the position of the player being dragged
+                    if (id === draggedPlayer && draggedPlayer !== null) {
+                        // Keep current position for dragged player
+                        filteredPlayers[id] = players[id];
+                    } else {
+                        filteredPlayers[id] = serverPlayers[id];
+                    }
                 }
             }
             players = filteredPlayers;
@@ -1594,6 +1600,88 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
 
         // Start hamburger ring animation
         drawHamburgerRings();
+
+        // Drag and drop functionality
+        let draggedPlayer = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Check if clicking on any player
+            for (const id in players) {
+                const player = players[id];
+                const dx = mouseX - player.position.x;
+                const dy = mouseY - player.position.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                // Check if click is within player radius
+                if (dist < circleRadius) {
+                    draggedPlayer = id;
+                    dragOffset.x = dx;
+                    dragOffset.y = dy;
+                    canvas.style.cursor = 'grabbing';
+                    break;
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (draggedPlayer) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                // Update player position
+                if (players[draggedPlayer]) {
+                    players[draggedPlayer].position.x = mouseX - dragOffset.x;
+                    players[draggedPlayer].position.y = mouseY - dragOffset.y;
+
+                    // Clamp to canvas bounds
+                    players[draggedPlayer].position.x = Math.max(30, Math.min(canvas.width - 30, players[draggedPlayer].position.x));
+                    players[draggedPlayer].position.y = Math.max(30, Math.min(canvas.height - 30, players[draggedPlayer].position.y));
+                }
+            } else {
+                // Update cursor when hovering over players
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                let overPlayer = false;
+                for (const id in players) {
+                    const player = players[id];
+                    const dx = mouseX - player.position.x;
+                    const dy = mouseY - player.position.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < circleRadius) {
+                        overPlayer = true;
+                        break;
+                    }
+                }
+
+                canvas.style.cursor = overPlayer ? 'grab' : 'default';
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (draggedPlayer && players[draggedPlayer]) {
+                // Send updated position to server
+                socket.emit('updatePlayerPosition', {
+                    playerId: draggedPlayer,
+                    position: players[draggedPlayer].position
+                });
+            }
+            draggedPlayer = null;
+            canvas.style.cursor = 'default';
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            draggedPlayer = null;
+            canvas.style.cursor = 'default';
+        });
 
         function draw() {
             // Clear canvas with black background
