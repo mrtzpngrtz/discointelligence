@@ -22,7 +22,7 @@ The system creates collective music generation through player distribution and A
 
 1. **Genre Selection**: Players choose their preferred music genre on their mobile devices.
 
-2. **Spatial Distribution**: Player positions and movements are tracked in real-time via Socket.IO WebSockets, creating a dynamic spatial map of genre preferences across the play area.
+2. **Spatial Distribution**: Player interactions with their smartphone joystick are tracked in real-time via Socket.IO WebSockets, creating a dynamic spatial map of genre preferences across the play area.
 
 3. **AI Prompt Generation with Gemini Flash**: The percentage distribution of players across different genres is continuously analyzed and sent to Google's Gemini Flash model, which generates contextual prompts that capture the current collective musical intent.
 
