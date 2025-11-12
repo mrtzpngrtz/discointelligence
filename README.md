@@ -8,9 +8,9 @@
          ♪♫•*¨*•.¸¸♪ SCHWARM D.I. ♪¸¸.•*¨*•♫♪
 ```
 
-A real-time multiplayer experience where players control shapes on their smartphones, with a server view showing all players with customizable visual effects.
+A prototype for collective music generation where players influence real-time AI-generated music through their spatial distribution.
 
-**A prototype for interaction with real-time generative music.**
+**An experiment in collaborative interaction with real-time generative music using Gemini Flash and Lyria.**
 
 ## Screenshots
 
@@ -18,15 +18,17 @@ A real-time multiplayer experience where players control shapes on their smartph
 
 ## How It Works
 
-The system creates an interactive musical experience by combining real-time player interactions with AI-powered generative music:
+The system creates collective music generation through player distribution and AI interpretation:
 
-1. **Player Interaction Layer**: Multiple players control shapes on their mobile devices, with movements synchronized in real-time via Socket.IO WebSockets.
+1. **Genre Selection**: Players choose their preferred music genre on their mobile devices.
 
-2. **AI Analysis with Gemini Flash**: Player movements, positions, and interaction patterns are continuously analyzed by Google's Gemini Flash model, which interprets the spatial relationships, velocities, and collaborative behaviors.
+2. **Spatial Distribution**: Player positions and movements are tracked in real-time via Socket.IO WebSockets, creating a dynamic spatial map of genre preferences across the play area.
 
-3. **Generative Music with Lyria**: Based on Gemini Flash's analysis, Google's Lyria music generation model creates dynamic, responsive music that reflects the current state of player interactions. The music evolves in real-time as players move and interact.
+3. **AI Prompt Generation with Gemini Flash**: The percentage distribution of players across different genres is continuously analyzed and sent to Google's Gemini Flash model, which generates contextual prompts that capture the current collective musical intent.
 
-4. **Real-time Feedback Loop**: The generated music influences player behavior, creating an emergent feedback system where human interaction and AI-generated sound continuously shape each other.
+4. **Real-time Music Generation with Lyria**: Based on Gemini Flash's generated prompts, Google's Lyria music generation model creates adaptive, real-time music that reflects the evolving distribution and preferences of all players.
+
+5. **Emergent Soundscape**: The collective choices and spatial arrangements of players create an ever-changing musical landscape, where individual actions contribute to a shared generative experience.
 
 ## Features
 
