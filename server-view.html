@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>schwarm D.I. – DISCO INTELLIGENCE. | Server View</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Roboto Mono', monospace;
+            background: #000000;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #000000;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #ui-bar .left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        #ui-bar .right {
+            display: flex;
+            align-items: center;
+        }
+
+        #ui-bar .title {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        #ui-bar .info {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        #ui-bar .status {
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        #ui-bar .status.connected {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        #ui-bar .status.disconnected {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        #hamburger {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #hamburger span {
+            width: 25px;
+            height: 2px;
+            background: #ffffff;
+            transition: all 0.3s;
+        }
+
+        #menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: #000000;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 102;
+            transition: right 0.3s;
+            padding: 70px 20px 20px 20px;
+            overflow-y: auto;
+        }
+
+        #menu.open {
+            right: 0;
+        }
+
+        #menu h3 {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            cursor: pointer;
+            border: none;
+            border-radius: 50%;
+        }
+
+        .control-group .value-display {
+            color: #ffffff;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .toggle-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .toggle-button span {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .toggle-button .status {
+            color: #ffffff;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .toggle-button.active .status {
+            background: #ffffff;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-bar">
+        <div class="left">
+            <div class="title">schwarm D.I. – DISCO INTELLIGENCE.</div>
+            <div class="info">PLAYERS: <span id="player-count">0</span></div>
+        </div>
+        <div class="right">
+            <div id="connection-status" class="status disconnected">CONNECTING</div>
+        </div>
+    </div>
+
+    <div id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div id="menu">
+        <h3>SETTINGS</h3>
+        
+        <div class="control-group">
+            <label>CIRCLE SCALE</label>
+            <input type="range" id="circle-scale" min="20" max="100" value="60" step="5">
+            <div class="value-display"><span id="circle-scale-value">60</span>px</div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="pulse-toggle">
+                <span>PULSE</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="lines-toggle">
+                <span>CONNECTION LINES</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="fill-toggle">
+                <span>CIRCLE FILL</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button" id="outline-toggle">
+                <span>CIRCLE OUTLINE</span>
+                <div class="status">OFF</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="metaball-toggle">
+                <span>METABALL EFFECT</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>METABALL RESOLUTION</label>
+            <input type="range" id="metaball-resolution" min="0.25" max="1" value="0.5" step="0.05">
+            <div class="value-display"><span id="metaball-resolution-value">0.5</span>x</div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusElement = document.getElementById('connection-status');
+        const playerCountElement = document.getElementById('player-count');
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Game state
+        let players = {};
+
+        // Socket.IO connection (viewer only, no interaction)
+        const socket = io({ query: { viewer: 'true' } });
+
+        socket.on('connect', () => {
+            statusElement.textContent = 'CONNECTED';
+            statusElement.className = 'status connected';
+            console.log('Server view connected as viewer');
+        });
+
+        socket.on('disconnect', () => {
+            statusElement.textContent = 'DISCONNECTED';
+            statusElement.className = 'status disconnected';
+            console.log('Server view disconnected');
+        });
+
+        socket.on('players', (serverPlayers) => {
+            // Filter out this viewer connection
+            const filteredPlayers = {};
+            for (const id in serverPlayers) {
+                if (id !== socket.id) {
+                    filteredPlayers[id] = serverPlayers[id];
+                }
+            }
+            players = filteredPlayers;
+            playerCountElement.textContent = Object.keys(players).length;
+        });
+
+        socket.on('playerMoved', (data) => {
+            if (players[data.id]) {
+                players[data.id].position = data.position;
+            }
+        });
+
+        socket.on('playerDisconnected', (id) => {
+            delete players[id];
+            playerCountElement.textContent = Object.keys(players).length;
+        });
+
+        // Music genres
+        const genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE'];
+        
+        // Store animated percentages
+        const genrePercentages = [0, 0, 0, 0, 0, 0];
+        const targetPercentages = [0, 0, 0, 0, 0, 0];
+        
+        // Calculate which genre section a player is in
+        function getPlayerGenre(x, y) {
+            const cols = 3;
+            const rows = 2;
+            const sectionWidth = canvas.width / cols;
+            const sectionHeight = canvas.height / rows;
+            
+            const col = Math.floor(x / sectionWidth);
+            const row = Math.floor(y / sectionHeight);
+            
+            if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                return row * cols + col;
+            }
+            return -1;
+        }
+        
+        // Draw genre sections and dot grid background
+        function drawGrid() {
+            const cols = 3;
+            const rows = 2;
+            const sectionWidth = canvas.width / cols;
+            const sectionHeight = canvas.height / rows;
+            
+            // Count players in each genre
+            const genreCounts = [0, 0, 0, 0, 0, 0];
+            let totalPlayers = 0;
+            
+            for (const id in players) {
+                const pos = players[id].position;
+                const genreIndex = getPlayerGenre(pos.x, pos.y);
+                if (genreIndex >= 0) {
+                    genreCounts[genreIndex]++;
+                    totalPlayers++;
+                }
+            }
+            
+            // Draw genre sections
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = col * sectionWidth;
+                    const y = row * sectionHeight;
+                    const genreIndex = row * cols + col;
+                    
+                    // Draw section border
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, sectionWidth, sectionHeight);
+                    
+                    // Calculate target percentage
+                    targetPercentages[genreIndex] = totalPlayers > 0 ? (genreCounts[genreIndex] / totalPlayers) * 100 : 0;
+                    
+                    // Smooth animation toward target
+                    const lerpSpeed = 0.1;
+                    genrePercentages[genreIndex] += (targetPercentages[genreIndex] - genrePercentages[genreIndex]) * lerpSpeed;
+                    
+                    // Draw vertical percentage bar on left side with more margin
+                    const barWidth = 8;
+                    const barHeight = sectionHeight - 40; // More margin top/bottom
+                    const barX = x + 15; // More margin from left
+                    const barY = y + 20; // More margin from top
+                    const fillHeight = (genrePercentages[genreIndex] / 100) * barHeight;
+                    
+                    // Background bar
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
+                    
+                    // Fill bar (animated)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(barX, barY + barHeight - fillHeight, barWidth, fillHeight);
+                    
+                    // Draw genre label in upper left corner (offset for UI bar if top row)
+                    const labelY = row === 0 ? y + 70 : y + 20;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '14px "Roboto Mono", monospace';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(genres[genreIndex], x + 35, labelY); // Offset for bar
+                    
+                    // Draw percentage text
+                    ctx.font = '10px "Roboto Mono", monospace';
+                    ctx.fillText(`${Math.round(genrePercentages[genreIndex])}%`, x + 35, labelY + 18);
+                }
+            }
+            
+            // Draw dot grid
+            const gridSize = 50;
+            const dotSize = 2;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+
+            for (let x = 0; x <= canvas.width; x += gridSize) {
+                for (let y = 0; y <= canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Calculate distance between two points
+        function distance(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        let pulseTime = 0;
+
+        // Store random pulse offsets for each player
+        const playerPulseOffsets = {};
+        
+        function getPlayerPulseOffset(playerId) {
+            if (!playerPulseOffsets[playerId]) {
+                playerPulseOffsets[playerId] = {
+                    offset: Math.random() * Math.PI * 2, // Random starting phase
+                    speed: 0.8 + Math.random() * 0.4,    // Random speed (0.8-1.2x)
+                    amplitude: 3 + Math.random() * 4      // Random amplitude (3-7px)
+                };
+            }
+            return playerPulseOffsets[playerId];
+        }
+
+        // Create off-screen canvas for metaball effect (at lower resolution for performance)
+        const metaballCanvas = document.createElement('canvas');
+        const metaballCtx = metaballCanvas.getContext('2d');
+        let metaballScale = 0.5; // Render at half resolution
+        let frameCount = 0;
+
+        function resizeMetaballCanvas() {
+            metaballCanvas.width = canvas.width * metaballScale;
+            metaballCanvas.height = canvas.height * metaballScale;
+        }
+        resizeMetaballCanvas();
+        window.addEventListener('resize', resizeMetaballCanvas);
+
+        // Settings
+        let circleRadius = 60;
+        let pulseEnabled = true;
+        let linesEnabled = true;
+        let fillEnabled = true;
+        let outlineEnabled = false;
+
+        // Hamburger menu toggle
+        const hamburger = document.getElementById('hamburger');
+        const menu = document.getElementById('menu');
+        
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('open');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (menu.classList.contains('open') && !menu.contains(e.target)) {
+                menu.classList.remove('open');
+            }
+        });
+
+        // Prevent menu clicks from closing the menu
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Circle scale control
+        const circleScaleInput = document.getElementById('circle-scale');
+        const circleScaleValue = document.getElementById('circle-scale-value');
+        
+        circleScaleInput.addEventListener('input', (e) => {
+            circleRadius = parseInt(e.target.value);
+            circleScaleValue.textContent = circleRadius;
+        });
+
+        // Pulse toggle
+        const pulseToggle = document.getElementById('pulse-toggle');
+        pulseToggle.addEventListener('click', () => {
+            pulseEnabled = !pulseEnabled;
+            pulseToggle.classList.toggle('active');
+            pulseToggle.querySelector('.status').textContent = pulseEnabled ? 'ON' : 'OFF';
+        });
+
+        // Lines toggle
+        const linesToggle = document.getElementById('lines-toggle');
+        linesToggle.addEventListener('click', () => {
+            linesEnabled = !linesEnabled;
+            linesToggle.classList.toggle('active');
+            linesToggle.querySelector('.status').textContent = linesEnabled ? 'ON' : 'OFF';
+        });
+
+        // Fill toggle
+        const fillToggle = document.getElementById('fill-toggle');
+        fillToggle.addEventListener('click', () => {
+            fillEnabled = !fillEnabled;
+            fillToggle.classList.toggle('active');
+            fillToggle.querySelector('.status').textContent = fillEnabled ? 'ON' : 'OFF';
+        });
+
+        // Outline toggle
+        const outlineToggle = document.getElementById('outline-toggle');
+        outlineToggle.addEventListener('click', () => {
+            outlineEnabled = !outlineEnabled;
+            outlineToggle.classList.toggle('active');
+            outlineToggle.querySelector('.status').textContent = outlineEnabled ? 'ON' : 'OFF';
+        });
+
+        // Metaball toggle
+        const metaballToggle = document.getElementById('metaball-toggle');
+        let metaballEnabled = true;
+        metaballToggle.addEventListener('click', () => {
+            metaballEnabled = !metaballEnabled;
+            metaballToggle.classList.toggle('active');
+            metaballToggle.querySelector('.status').textContent = metaballEnabled ? 'ON' : 'OFF';
+        });
+
+        // Metaball resolution control
+        const metaballResolutionInput = document.getElementById('metaball-resolution');
+        const metaballResolutionValue = document.getElementById('metaball-resolution-value');
+        
+        metaballResolutionInput.addEventListener('input', (e) => {
+            metaballScale = parseFloat(e.target.value);
+            metaballResolutionValue.textContent = metaballScale.toFixed(2);
+            resizeMetaballCanvas();
+        });
+
+        function draw() {
+            // Clear canvas with black background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid background
+            drawGrid();
+
+            // Collect all positions
+            const allPositions = [];
+            for (const id in players) {
+                allPositions.push({ 
+                    id: id, 
+                    pos: players[id].position,
+                    player: players[id]
+                });
+            }
+            
+            // Draw connection lines (if enabled)
+            if (linesEnabled) {
+                for (let i = 0; i < allPositions.length; i++) {
+                    for (let j = i + 1; j < allPositions.length; j++) {
+                        const pos1 = allPositions[i].pos;
+                        const pos2 = allPositions[j].pos;
+                        const dist = distance(pos1.x, pos1.y, pos2.x, pos2.y);
+                        
+                        // Connect lines at longer distance
+                        const maxDistance = 1200;
+                        
+                        if (dist < maxDistance) {
+                            // Full white 2px lines
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.moveTo(pos1.x, pos1.y);
+                            ctx.lineTo(pos2.x, pos2.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // Update pulse animation
+            pulseTime += 0.05;
+            frameCount++;
+
+            // Only update metaballs every other frame for performance (if fill is enabled and metaball enabled)
+            if (fillEnabled && metaballEnabled && frameCount % 2 === 0) {
+                // Clear and draw metaballs on off-screen canvas
+                metaballCtx.clearRect(0, 0, metaballCanvas.width, metaballCanvas.height);
+                
+                // Draw blurred shapes at lower resolution
+                metaballCtx.filter = 'blur(8px)';
+                for (const id in players) {
+                    const player = players[id];
+                    const pulseData = getPlayerPulseOffset(id);
+                    const pulseAmount = pulseEnabled ? Math.sin((pulseTime * pulseData.speed) + pulseData.offset) * pulseData.amplitude : 0;
+                    const pulsedSize = (circleRadius + pulseAmount) * metaballScale;
+                    const shape = player.shape || 'circle';
+                    
+                    const scaledX = player.position.x * metaballScale;
+                    const scaledY = player.position.y * metaballScale;
+                    
+                    // Draw shape with gradient
+                    metaballCtx.fillStyle = 'rgba(255, 255, 255, 1)';
+                    
+                    if (shape === 'circle') {
+                        const gradient = metaballCtx.createRadialGradient(
+                            scaledX, scaledY, 0,
+                            scaledX, scaledY, pulsedSize
+                        );
+                        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
+                        
+                        metaballCtx.beginPath();
+                        metaballCtx.arc(scaledX, scaledY, pulsedSize, 0, Math.PI * 2);
+                        metaballCtx.fillStyle = gradient;
+                        metaballCtx.fill();
+                    } else if (shape === 'square') {
+                        metaballCtx.fillRect(
+                            scaledX - pulsedSize,
+                            scaledY - pulsedSize,
+                            pulsedSize * 2,
+                            pulsedSize * 2
+                        );
+                    } else if (shape === 'triangle') {
+                        metaballCtx.beginPath();
+                        metaballCtx.moveTo(scaledX, scaledY - pulsedSize);
+                        metaballCtx.lineTo(scaledX + pulsedSize, scaledY + pulsedSize);
+                        metaballCtx.lineTo(scaledX - pulsedSize, scaledY + pulsedSize);
+                        metaballCtx.closePath();
+                        metaballCtx.fill();
+                    }
+                }
+                
+                // Apply threshold to create sharp metaball edges
+                const imageData = metaballCtx.getImageData(0, 0, metaballCanvas.width, metaballCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const alpha = data[i + 3];
+                    // Threshold: if alpha > 150, make it fully opaque white, else transparent
+                    if (alpha > 150) {
+                        data[i] = 255;     // R
+                        data[i + 1] = 255; // G
+                        data[i + 2] = 255; // B
+                        data[i + 3] = 255; // A
+                    } else {
+                        data[i + 3] = 0;
+                    }
+                }
+                
+                metaballCtx.filter = 'none';
+                metaballCtx.clearRect(0, 0, metaballCanvas.width, metaballCanvas.height);
+                metaballCtx.putImageData(imageData, 0, 0);
+            }
+            
+            // Draw metaballs with outline if enabled (only if metaball is enabled)
+            if (metaballEnabled && (fillEnabled || outlineEnabled)) {
+                if (outlineEnabled) {
+                    // Draw outline by drawing metaball with shadow/stroke effect
+                    ctx.save();
+                    
+                    // Draw outline using shadow
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 0;
+                    
+                    // Draw multiple offset copies to create outline
+                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                        ctx.shadowOffsetX = Math.cos(angle) * 3;
+                        ctx.shadowOffsetY = Math.sin(angle) * 3;
+                        ctx.drawImage(metaballCanvas, 0, 0, canvas.width, canvas.height);
+                    }
+                    
+                    ctx.restore();
+                }
+                
+                // Draw fill on top if enabled
+                if (fillEnabled) {
+                    ctx.drawImage(metaballCanvas, 0, 0, canvas.width, canvas.height);
+                }
+            }
+            
+            // If metaball is off, draw simple shapes
+            if (!metaballEnabled && fillEnabled) {
+                for (const id in players) {
+                    const player = players[id];
+                    const pulseData = getPlayerPulseOffset(id);
+                    const pulseAmount = pulseEnabled ? Math.sin((pulseTime * pulseData.speed) + pulseData.offset) * pulseData.amplitude : 0;
+                    const pulsedSize = circleRadius + pulseAmount;
+                    const shape = player.shape || 'circle';
+                    
+                    ctx.fillStyle = '#ffffff';
+                    
+                    if (shape === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(player.position.x, player.position.y, pulsedSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        if (outlineEnabled) {
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 3;
+                            ctx.stroke();
+                        }
+                        ctx.closePath();
+                    } else if (shape === 'square') {
+                        ctx.fillRect(
+                            player.position.x - pulsedSize,
+                            player.position.y - pulsedSize,
+                            pulsedSize * 2,
+                            pulsedSize * 2
+                        );
+                        
+                        if (outlineEnabled) {
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 3;
+                            ctx.strokeRect(
+                                player.position.x - pulsedSize,
+                                player.position.y - pulsedSize,
+                                pulsedSize * 2,
+                                pulsedSize * 2
+                            );
+                        }
+                    } else if (shape === 'triangle') {
+                        ctx.beginPath();
+                        ctx.moveTo(player.position.x, player.position.y - pulsedSize);
+                        ctx.lineTo(player.position.x + pulsedSize, player.position.y + pulsedSize);
+                        ctx.lineTo(player.position.x - pulsedSize, player.position.y + pulsedSize);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        if (outlineEnabled) {
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 3;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            
+            // Draw player names on top
+            for (const id in players) {
+                const player = players[id];
+                const playerName = player.name || '';
+                if (playerName) {
+                    ctx.font = '300 16px "Roboto Mono"';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Measure text for background
+                    const textMetrics = ctx.measureText(playerName);
+                    const textWidth = textMetrics.width;
+                    const textHeight = 20;
+                    const padding = 6;
+                    
+                    // Draw white background
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(
+                        player.position.x - textWidth / 2 - padding,
+                        player.position.y - textHeight / 2,
+                        textWidth + padding * 2,
+                        textHeight
+                    );
+                    
+                    // Draw text
+                    ctx.fillStyle = 'black';
+                    ctx.fillText(playerName, player.position.x, player.position.y);
+                }
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>

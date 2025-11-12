@@ -1,0 +1,20 @@
+{
+  "name": "multiplayer-circle",
+  "version": "1.0.0",
+  "description": "Real-time multiplayer circle game using Socket.IO",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "multiplayer",
+    "socketio",
+    "real-time"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  }
+}

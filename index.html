@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>schwarm D.I. – DISCO INTELLIGENCE.</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+            background: #000000;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: move;
+        }
+
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        #connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        .connected {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .disconnected {
+            background: #666666;
+            color: #ffffff;
+        }
+
+        #name-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #name-modal.hidden {
+            display: none;
+        }
+
+        .name-input-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+        }
+
+        .name-input-container h2 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            color: #000000;
+        }
+
+        .name-input-container input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .name-input-container button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .name-input-container button:active {
+            background: #333333;
+        }
+
+        .shape-selector {
+            margin-bottom: 20px;
+        }
+
+        .shape-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        .shape-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .shape-option {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #000000;
+            background: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .shape-option:hover {
+            background: #f0f0f0;
+        }
+
+        .shape-option.selected {
+            background: #000000;
+            border-color: #000000;
+        }
+
+        .shape-option svg {
+            width: 30px;
+            height: 30px;
+        }
+
+        .shape-option.selected svg {
+            fill: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="name-modal">
+        <div class="name-input-container">
+            <h2>Enter Your Name</h2>
+            <input type="text" id="player-name-input" placeholder="Your name" maxlength="20" autocomplete="off">
+            
+            <div class="shape-selector">
+                <label>Choose Your Shape</label>
+                <div class="shape-options">
+                    <div class="shape-option selected" data-shape="circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="#000000"/>
+                        </svg>
+                    </div>
+                    <div class="shape-option" data-shape="square">
+                        <svg viewBox="0 0 100 100">
+                            <rect x="10" y="10" width="80" height="80" fill="#000000"/>
+                        </svg>
+                    </div>
+                    <div class="shape-option" data-shape="triangle">
+                        <svg viewBox="0 0 100 100">
+                            <polygon points="50,10 90,90 10,90" fill="#000000"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="start-button">Start</button>
+        </div>
+    </div>
+
+    <div id="connection-status" class="disconnected">Connecting...</div>
+    <div id="info">
+        <div>Players: <span id="player-count">0</span></div>
+        <div>Your ID: <span id="player-id">-</span></div>
+    </div>
+    <canvas id="canvas"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusElement = document.getElementById('connection-status');
+        const playerCountElement = document.getElementById('player-count');
+        const playerIdElement = document.getElementById('player-id');
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Game state
+        let players = {};
+        let myId = null;
+        let myPosition = { x: canvas.width / 2, y: canvas.height / 2 };
+        let isDragging = false;
+        let myName = '';
+        let myShape = 'circle';
+
+        // Name modal elements
+        const nameModal = document.getElementById('name-modal');
+        const nameInput = document.getElementById('player-name-input');
+        const startButton = document.getElementById('start-button');
+        const shapeOptions = document.querySelectorAll('.shape-option');
+
+        // Shape selection
+        shapeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                shapeOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                myShape = option.dataset.shape;
+            });
+        });
+
+        // Handle name submission
+        function startGame() {
+            const name = nameInput.value.trim();
+            if (name.length === 0) {
+                alert('Please enter a name');
+                return;
+            }
+            myName = name;
+            nameModal.classList.add('hidden');
+            
+            // Send name and shape to server if already connected
+            if (myId) {
+                socket.emit('setName', myName);
+                socket.emit('setShape', myShape);
+            }
+        }
+
+        startButton.addEventListener('click', startGame);
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startGame();
+            }
+        });
+
+        // Focus input on load
+        window.addEventListener('load', () => {
+            nameInput.focus();
+        });
+
+        // Socket.IO connection
+        const socket = io();
+
+        socket.on('connect', () => {
+            statusElement.textContent = 'Connected';
+            statusElement.className = 'connected';
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            statusElement.textContent = 'Disconnected';
+            statusElement.className = 'disconnected';
+            console.log('Disconnected from server');
+        });
+
+        socket.on('init', (data) => {
+            myId = data.id;
+            playerIdElement.textContent = myId.substring(0, 8);
+            myPosition = data.position;
+            console.log('Initialized with ID:', myId);
+        });
+
+        socket.on('players', (serverPlayers) => {
+            players = serverPlayers;
+            playerCountElement.textContent = Object.keys(players).length;
+        });
+
+        socket.on('playerMoved', (data) => {
+            if (players[data.id]) {
+                players[data.id].position = data.position;
+            }
+        });
+
+        socket.on('playerDisconnected', (id) => {
+            delete players[id];
+            playerCountElement.textContent = Object.keys(players).length;
+        });
+
+        // Input handling
+        function getInputPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            const pos = getInputPosition(e);
+            const dx = pos.x - myPosition.x;
+            const dy = pos.y - myPosition.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Only start dragging if touching near the circle (within 80px radius for easier mobile touch)
+            if (distance < 80) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            const pos = getInputPosition(e);
+            myPosition.x = Math.max(30, Math.min(canvas.width - 30, pos.x));
+            myPosition.y = Math.max(30, Math.min(canvas.height - 30, pos.y));
+
+            socket.emit('move', myPosition);
+        }
+
+        function endDrag(e) {
+            e.preventDefault();
+            isDragging = false;
+        }
+
+        // Touch events
+        canvas.addEventListener('touchstart', startDrag);
+        canvas.addEventListener('touchmove', drag);
+        canvas.addEventListener('touchend', endDrag);
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('mousemove', drag);
+        canvas.addEventListener('mouseup', endDrag);
+        canvas.addEventListener('mouseleave', endDrag);
+
+        // Draw dot grid background
+        function drawGrid() {
+            const gridSize = 50;
+            const dotSize = 2;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+
+            // Draw dots at grid intersections
+            for (let x = 0; x <= canvas.width; x += gridSize) {
+                for (let y = 0; y <= canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Store previous positions for motion blur
+        let playerTrail = [];
+        const trailLength = 8;
+
+        // Draw shape based on type
+        function drawShape(x, y, size, shape, isMe = false, playerName = '') {
+            if (isMe) {
+                // Add current position to trail
+                playerTrail.push({ x, y });
+                if (playerTrail.length > trailLength) {
+                    playerTrail.shift();
+                }
+                
+                // Draw motion blur trail
+                for (let i = 0; i < playerTrail.length - 1; i++) {
+                    const trail = playerTrail[i];
+                    const alpha = (i + 1) / playerTrail.length * 0.3;
+                    
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    
+                    if (shape === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(trail.x, trail.y, size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.closePath();
+                    } else if (shape === 'square') {
+                        ctx.fillRect(trail.x - size, trail.y - size, size * 2, size * 2);
+                    } else if (shape === 'triangle') {
+                        ctx.beginPath();
+                        ctx.moveTo(trail.x, trail.y - size);
+                        ctx.lineTo(trail.x + size, trail.y + size);
+                        ctx.lineTo(trail.x - size, trail.y + size);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // Draw main shape (solid white)
+            ctx.fillStyle = '#ffffff';
+            
+            if (shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.closePath();
+            } else if (shape === 'square') {
+                ctx.fillRect(x - size, y - size, size * 2, size * 2);
+            } else if (shape === 'triangle') {
+                ctx.beginPath();
+                ctx.moveTo(x, y - size);
+                ctx.lineTo(x + size, y + size);
+                ctx.lineTo(x - size, y + size);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Draw player name
+            if (playerName) {
+                ctx.font = '300 16px "Roboto Mono"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Measure text for background
+                const textMetrics = ctx.measureText(playerName);
+                const textWidth = textMetrics.width;
+                const textHeight = 20;
+                const padding = 6;
+                
+                // Draw white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(
+                    x - textWidth / 2 - padding,
+                    y - textHeight / 2,
+                    textWidth + padding * 2,
+                    textHeight
+                );
+                
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(playerName, x, y);
+            }
+        }
+
+        function draw() {
+            // Clear canvas with black background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid background
+            drawGrid();
+
+            // MOBILE VIEW: Only draw my own shape (no other players, no connection lines)
+            // Draw my shape - matching server scale (60px size)
+            if (myId && players[myId]) {
+                const playerName = players[myId].name || '';
+                const playerShape = players[myId].shape || 'circle';
+                drawShape(myPosition.x, myPosition.y, 60, playerShape, true, playerName);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
