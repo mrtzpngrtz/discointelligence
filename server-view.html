@@ -44,12 +44,83 @@
         #ui-bar .left {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
+        }
+
+        #playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #playback-controls button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        #playback-controls button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #playback-controls button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        #volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #volume-slider {
+            width: 80px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        #volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            cursor: pointer;
+            border: none;
+            border-radius: 50%;
+        }
+
+        #volume-label {
+            font-size: 11px;
+            opacity: 0.7;
+            min-width: 35px;
         }
 
         #ui-bar .right {
             display: flex;
             align-items: center;
+            gap: 20px;
         }
 
         #ui-bar .title {
@@ -79,6 +150,118 @@
             color: #ffffff;
         }
 
+        #api-key-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #api-key-modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            color: #000000;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .modal-content button:hover {
+            background: #333333;
+        }
+
+        .modal-content p {
+            color: #666666;
+            font-size: 12px;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        #music-status {
+            font-size: 12px;
+            opacity: 0.7;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        #prompt-ticker {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            color: #ffffff;
+            padding: 8px 0;
+            font-size: 11px;
+            font-family: 'Roboto Mono', monospace;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 98;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        #prompt-ticker .ticker-wrapper {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker-scroll 20s linear infinite;
+        }
+
+        @keyframes ticker-scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        #prompt-ticker .label {
+            opacity: 0.5;
+            margin-right: 10px;
+        }
+
+        #prompt-ticker .text {
+            opacity: 0.9;
+        }
+
         #hamburger {
             position: fixed;
             top: 60px;
@@ -99,6 +282,18 @@
             height: 2px;
             background: #ffffff;
             transition: all 0.3s;
+            position: relative;
+            z-index: 2;
+        }
+
+        #hamburger-rings {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 100;
         }
 
         #menu {
@@ -206,16 +401,50 @@
     </style>
 </head>
 <body>
+    <div id="api-key-modal">
+        <div class="modal-content">
+            <h2>🎵 Lyria Music Generation</h2>
+            <p>Enter your Google Gemini API key to enable realtime music generation based on player positions.</p>
+            <input type="password" id="api-key-input" placeholder="Enter your Gemini API key">
+            <button onclick="connectLyria()">Connect & Start Music</button>
+            <p>The music will adapt in realtime based on where players are positioned in the genre sections.</p>
+        </div>
+    </div>
+
     <div id="ui-bar">
         <div class="left">
             <div class="title">schwarm D.I. – DISCO INTELLIGENCE.</div>
             <div class="info">PLAYERS: <span id="player-count">0</span></div>
+            <div id="music-status">🎵 Music: Not Connected</div>
         </div>
         <div class="right">
+            <div id="playback-controls">
+                <button id="play-btn" disabled title="Play">▶</button>
+                <button id="stop-btn" disabled title="Stop">■</button>
+                <div id="volume-control">
+                    <span style="font-size: 12px;">🔊</span>
+                    <input type="range" id="volume-slider" min="0" max="100" value="100" />
+                    <span id="volume-label">100%</span>
+                </div>
+            </div>
             <div id="connection-status" class="status disconnected">CONNECTING</div>
         </div>
     </div>
 
+    <div id="prompt-ticker">
+        <div class="ticker-wrapper">
+            <span class="label">CURRENT PROMPT:</span>
+            <span class="text" id="prompt-text">Waiting for music generation...</span>
+            <span style="margin: 0 30px;">•</span>
+            <span class="label">CURRENT PROMPT:</span>
+            <span class="text" id="prompt-text-repeat">Waiting for music generation...</span>
+            <span style="margin: 0 30px;">•</span>
+            <span class="label">CURRENT PROMPT:</span>
+            <span class="text" id="prompt-text-repeat2">Waiting for music generation...</span>
+        </div>
+    </div>
+
+    <div id="hamburger-rings"></div>
     <div id="hamburger">
         <span></span>
         <span></span>
@@ -271,24 +500,461 @@
             <input type="range" id="metaball-resolution" min="0.25" max="1" value="0.5" step="0.05">
             <div class="value-display"><span id="metaball-resolution-value">0.5</span>x</div>
         </div>
+
+        <h3 style="margin-top: 30px;">AUDIO VISUALIZATION</h3>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="player-rings-toggle">
+                <span>PLAYER RINGS</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="hamburger-rings-toggle">
+                <span>HAMBURGER RINGS</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px;">LYRIA MUSIC</h3>
+
+        <div class="control-group">
+            <div class="toggle-button active" id="adaptive-music-toggle">
+                <span>ADAPTIVE MUSIC</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>BPM (60-200)</label>
+            <input type="range" id="lyria-bpm" min="60" max="200" value="120" step="5">
+            <div class="value-display"><span id="lyria-bpm-value">120</span></div>
+        </div>
+
+        <div class="control-group">
+            <label>TEMPERATURE (0-3)</label>
+            <input type="range" id="lyria-temperature" min="0" max="3" value="1.1" step="0.1">
+            <div class="value-display"><span id="lyria-temperature-value">1.1</span></div>
+        </div>
+
+        <div class="control-group">
+            <label>GUIDANCE (0-6)</label>
+            <input type="range" id="lyria-guidance" min="0" max="6" value="4.0" step="0.1">
+            <div class="value-display"><span id="lyria-guidance-value">4.0</span></div>
+        </div>
+
+        <div class="control-group">
+            <label>DENSITY (0-1)</label>
+            <input type="range" id="lyria-density" min="0" max="1" value="0.5" step="0.05">
+            <div class="value-display"><span id="lyria-density-value">0.5</span></div>
+        </div>
+
+        <div class="control-group">
+            <label>BRIGHTNESS (0-1)</label>
+            <input type="range" id="lyria-brightness" min="0" max="1" value="0.5" step="0.05">
+            <div class="value-display"><span id="lyria-brightness-value">0.5</span></div>
+        </div>
+
+        <div class="control-group">
+            <label>SCALE</label>
+            <select id="lyria-scale" style="width: 100%; padding: 8px; background: #000000; color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; font-family: 'Roboto Mono', monospace; font-size: 11px;">
+                <option value="SCALE_UNSPECIFIED" style="background: #000000; color: #ffffff;">Model Decides</option>
+                <option value="C_MAJOR_A_MINOR" style="background: #000000; color: #ffffff;">C Major / A Minor</option>
+                <option value="D_MAJOR_B_MINOR" style="background: #000000; color: #ffffff;">D Major / B Minor</option>
+                <option value="E_MAJOR_D_FLAT_MINOR" style="background: #000000; color: #ffffff;">E Major / C♯ Minor</option>
+                <option value="F_MAJOR_D_MINOR" style="background: #000000; color: #ffffff;">F Major / D Minor</option>
+                <option value="G_MAJOR_E_MINOR" style="background: #000000; color: #ffffff;">G Major / E Minor</option>
+                <option value="A_MAJOR_G_FLAT_MINOR" style="background: #000000; color: #ffffff;">A Major / F♯ Minor</option>
+                <option value="B_FLAT_MAJOR_G_MINOR" style="background: #000000; color: #ffffff;">B♭ Major / G Minor</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <button id="apply-lyria-config" style="width: 100%; padding: 10px; background: #ffffff; color: #000000; border: none; border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">
+                APPLY CONFIGURATION
+            </button>
+        </div>
     </div>
 
     <canvas id="canvas"></canvas>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
+    <script type="module">
+        import { GoogleGenAI } from 'https://esm.run/@google/genai';
+        import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
+
+        /**
+         * LyriaBrowserPlayer - Handles realtime audio playback
+         */
+        class LyriaBrowserPlayer {
+            constructor(sampleRate = 48000, channels = 2) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: sampleRate
+                });
+                this.sampleRate = sampleRate;
+                this.channels = channels;
+                this.audioQueue = [];
+                this.nextChunkTime = 0;
+                this.isPlaying = false;
+
+                if (this.audioContext.state === 'suspended') {
+                    console.warn('AudioContext suspended. User interaction required.');
+                }
+            }
+
+            playAudioChunk(base64Data) {
+                const audioBuffer = this._decodePcm16(base64Data);
+                this.audioQueue.push(audioBuffer);
+
+                if (!this.isPlaying) {
+                    this._schedulePlayback();
+                }
+            }
+
+            _base64ToArrayBuffer(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            _decodePcm16(base64Data) {
+                const buffer = this._base64ToArrayBuffer(base64Data);
+                const pcm16Data = new Int16Array(buffer);
+                const numSamples = pcm16Data.length / this.channels;
+
+                const audioBuffer = this.audioContext.createBuffer(
+                    this.channels,
+                    numSamples,
+                    this.sampleRate
+                );
+
+                for (let c = 0; c < this.channels; c++) {
+                    const channelData = audioBuffer.getChannelData(c);
+                    for (let i = 0; i < numSamples; i++) {
+                        const sampleIndex = i * this.channels + c;
+                        const int16Sample = pcm16Data[sampleIndex];
+                        channelData[i] = int16Sample / 32768.0;
+                    }
+                }
+                return audioBuffer;
+            }
+
+            _schedulePlayback() {
+                if (this.audioQueue.length === 0) {
+                    this.isPlaying = false;
+                    return;
+                }
+
+                this.isPlaying = true;
+                const now = this.audioContext.currentTime;
+                const audioBuffer = this.audioQueue.shift();
+
+                if (this.nextChunkTime < now) {
+                    this.nextChunkTime = now;
+                }
+
+                const source = this.audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(this.audioContext.destination);
+                source.start(this.nextChunkTime);
+                this.nextChunkTime += audioBuffer.duration;
+
+                source.onended = () => {
+                    this._schedulePlayback();
+                };
+            }
+
+            resume() {
+                if (this.audioContext.state === 'suspended') {
+                    console.log('Resuming AudioContext...');
+                    this.audioContext.resume();
+                }
+            }
+        }
+
+        // Global Lyria variables
+        window.lyriaSession = null;
+        window.audioPlayer = null;
+        window.lastGenreWeights = null;
+        window.geminiModel = null;
+        window.currentApiKey = null;
+        window.currentPromptText = 'Waiting for music generation...';
+
+        // Playback controls
+        const playBtn = document.getElementById('play-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeLabel = document.getElementById('volume-label');
+        const promptText = document.getElementById('prompt-text');
+
+        // Volume control
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = parseInt(e.target.value) / 100;
+            volumeLabel.textContent = `${e.target.value}%`;
+            
+            if (window.audioPlayer && window.audioPlayer.audioContext) {
+                // Create gain node if it doesn't exist
+                if (!window.audioPlayer.gainNode) {
+                    window.audioPlayer.gainNode = window.audioPlayer.audioContext.createGain();
+                    window.audioPlayer.gainNode.connect(window.audioPlayer.audioContext.destination);
+                }
+                window.audioPlayer.gainNode.gain.value = volume;
+            }
+        });
+
+        // Play button
+        playBtn.addEventListener('click', async () => {
+            if (window.lyriaSession) {
+                try {
+                    await window.lyriaSession.play();
+                    if (window.audioPlayer) {
+                        window.audioPlayer.resume();
+                    }
+                    console.log('Playback resumed');
+                } catch (error) {
+                    console.error('Failed to play:', error);
+                }
+            }
+        });
+
+        // Stop button
+        stopBtn.addEventListener('click', async () => {
+            if (window.lyriaSession) {
+                try {
+                    await window.lyriaSession.stop();
+                    console.log('Playback stopped');
+                } catch (error) {
+                    console.error('Failed to stop:', error);
+                }
+            }
+        });
+
+        // Connect to Lyria
+        window.connectLyria = async function() {
+            const apiKey = document.getElementById('api-key-input').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter an API key');
+                return;
+            }
+
+            try {
+                const musicStatus = document.getElementById('music-status');
+                musicStatus.textContent = '🎵 Music: Connecting...';
+                
+                console.log('Connecting to Lyria...');
+                
+                const client = new GoogleGenAI({ 
+                    apiKey: apiKey,
+                    apiVersion: 'v1alpha'
+                });
+
+                // Initialize audio player
+                if (!window.audioPlayer) {
+                    window.audioPlayer = new LyriaBrowserPlayer(48000, 2);
+                }
+
+                // Connect to Lyria
+                window.lyriaSession = await client.live.music.connect({
+                    model: 'models/lyria-realtime-exp',
+                    callbacks: {
+                        onmessage: (message) => {
+                            if (message.serverContent?.audioChunks) {
+                                for (const chunk of message.serverContent.audioChunks) {
+                                    window.audioPlayer.playAudioChunk(chunk.data);
+                                }
+                            }
+                            if (message.serverContent?.filteredPrompt) {
+                                console.warn('Prompt filtered:', message.serverContent.filteredPrompt);
+                            }
+                        },
+                        onerror: (error) => {
+                            console.error('Lyria session error:', error);
+                            musicStatus.textContent = '🎵 Music: Error';
+                        },
+                        onclose: (event) => {
+                            console.warn('Lyria session closed:', event);
+                            musicStatus.textContent = '🎵 Music: Disconnected';
+                        }
+                    }
+                });
+
+                console.log('Connected to Lyria!');
+
+                // Store API key for Gemini Flash
+                window.currentApiKey = apiKey;
+
+                // Initialize Gemini Flash for prompt generation (separate client)
+                try {
+                    const geminiClient = new GoogleGenerativeAI(apiKey);
+                    window.geminiModel = geminiClient.getGenerativeModel({
+                        model: 'gemini-2.0-flash-exp'
+                    });
+                    console.log('Gemini Flash initialized for prompt generation');
+                } catch (flashError) {
+                    console.warn('Could not initialize Gemini Flash, falling back to simple prompts:', flashError);
+                }
+
+                // Set initial config
+                await window.lyriaSession.setMusicGenerationConfig({
+                    musicGenerationConfig: {
+                        bpm: 120,
+                        temperature: 1.1,
+                        guidance: 4.0,
+                        density: 0.5,
+                        brightness: 0.5,
+                        scale: 'SCALE_UNSPECIFIED'
+                    }
+                });
+
+                // Start playback
+                await window.lyriaSession.play();
+                window.audioPlayer.resume();
+
+                // Hide modal
+                document.getElementById('api-key-modal').classList.add('hidden');
+                
+                musicStatus.textContent = '🎵 Music: Active - Adapting to Players';
+                
+                console.log('Lyria session active!');
+                
+                // Enable playback controls
+                playBtn.disabled = false;
+                stopBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Failed to connect to Lyria:', error);
+                alert('Failed to connect to Lyria: ' + error.message);
+            }
+        };
+
+        // Update prompt ticker
+        function updatePromptTicker(prompts) {
+            if (prompts && prompts.length > 0) {
+                if (prompts.length === 1) {
+                    window.currentPromptText = prompts[0].text;
+                } else {
+                    // Multiple weighted prompts - show them with weights
+                    window.currentPromptText = prompts.map(p => 
+                        `${p.text} (${Math.round(p.weight * 100)}%)`
+                    ).join(' + ');
+                }
+                promptText.textContent = window.currentPromptText;
+                // Update all repeated instances
+                document.getElementById('prompt-text-repeat').textContent = window.currentPromptText;
+                document.getElementById('prompt-text-repeat2').textContent = window.currentPromptText;
+                
+                // Broadcast prompt to stats dashboard
+                if (socket && socket.connected) {
+                    socket.emit('promptUpdate', window.currentPromptText);
+                }
+            }
+        }
+
+        // Generate sophisticated prompt using Gemini Flash
+        async function generateLyriaPrompt(percentages) {
+            const genres = ['techno', 'electro', 'jazz', 'hip hop', 'classical', 'house'];
+            
+            // Build genre distribution text
+            const genreList = genres
+                .map((genre, i) => percentages[i] > 5 ? `${Math.round(percentages[i])}% ${genre}` : null)
+                .filter(x => x)
+                .join(', ');
+
+            if (!genreList) {
+                return [{
+                    text: 'minimal ambient music with sparse atmospheric sounds',
+                    weight: 1.0
+                }];
+            }
+
+            // Try to use Gemini Flash for sophisticated prompt generation
+            if (window.geminiModel) {
+                try {
+                    const prompt = `You are a music prompt expert for Google's Lyria music generation system. Based on these genre percentages: ${genreList}, generate a sophisticated, detailed music prompt.
+
+Follow these Lyria prompt guidelines:
+- Be specific about instruments, rhythm, melody, harmony
+- Describe the mood, energy level, and atmosphere
+- Include tempo indicators and musical style details
+- Keep it concise but descriptive (2-3 sentences max)
+- Focus on the dominant genres but blend elements
+
+Generate ONE unified prompt that captures the blend. Respond with ONLY the prompt text, no explanations.`;
+
+                    const result = await window.geminiModel.generateContent(prompt);
+                    const response = await result.response;
+                    const generatedPrompt = response.text().trim();
+                    
+                    console.log('Gemini Flash generated prompt:', generatedPrompt);
+                    
+                    return [{
+                        text: generatedPrompt,
+                        weight: 1.0
+                    }];
+                } catch (error) {
+                    console.warn('Gemini Flash generation failed, using fallback:', error);
+                }
+            }
+
+            // Fallback: simple weighted prompts
+            const weightedPrompts = [];
+            for (let i = 0; i < genres.length; i++) {
+                if (percentages[i] > 5) {
+                    const weight = percentages[i] / 100;
+                    weightedPrompts.push({
+                        text: `${genres[i]} with deep rhythmic patterns and atmospheric elements`,
+                        weight: weight
+                    });
+                }
+            }
+
+            return weightedPrompts.length > 0 ? weightedPrompts : [{
+                text: 'minimal ambient music with sparse atmospheric sounds',
+                weight: 1.0
+            }];
+        }
+
+        // Update music based on genre percentages
+        window.updateMusicFromGenres = async function(percentages) {
+            if (!window.lyriaSession) return;
+
+            // Check if weights have changed significantly (>5% change)
+            if (window.lastGenreWeights) {
+                let maxChange = 0;
+                for (let i = 0; i < 6; i++) {
+                    const change = Math.abs(percentages[i] - window.lastGenreWeights[i]);
+                    if (change > maxChange) maxChange = change;
+                }
+                if (maxChange < 5) return; // Don't update if change is too small
+            }
+
+            window.lastGenreWeights = [...percentages];
+
+            try {
+                // Generate sophisticated prompt using Gemini Flash
+                const weightedPrompts = await generateLyriaPrompt(percentages);
+                
+                console.log('Updating music with prompts:', weightedPrompts);
+                await window.lyriaSession.setWeightedPrompts({
+                    weightedPrompts: weightedPrompts
+                });
+                
+                // Update prompt ticker
+                updatePromptTicker(weightedPrompts);
+            } catch (error) {
+                console.error('Failed to update music prompts:', error);
+            }
+        };
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const statusElement = document.getElementById('connection-status');
         const playerCountElement = document.getElementById('player-count');
-
-        // Set canvas size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
         // Game state
         let players = {};
@@ -296,10 +962,32 @@
         // Socket.IO connection (viewer only, no interaction)
         const socket = io({ query: { viewer: 'true' } });
 
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Send canvas dimensions to server for physics boundaries
+            if (socket && socket.connected) {
+                socket.emit('updateBounds', {
+                    width: canvas.width,
+                    height: canvas.height
+                });
+            }
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
         socket.on('connect', () => {
             statusElement.textContent = 'CONNECTED';
             statusElement.className = 'status connected';
             console.log('Server view connected as viewer');
+            
+            // Send initial canvas dimensions to server
+            socket.emit('updateBounds', {
+                width: canvas.width,
+                height: canvas.height
+            });
         });
 
         socket.on('disconnect', () => {
@@ -320,10 +1008,16 @@
             playerCountElement.textContent = Object.keys(players).length;
         });
 
-        socket.on('playerMoved', (data) => {
-            if (players[data.id]) {
-                players[data.id].position = data.position;
+        socket.on('physicsUpdate', (serverPlayers) => {
+            // Update all player positions from server physics
+            const filteredPlayers = {};
+            for (const id in serverPlayers) {
+                if (id !== socket.id) {
+                    filteredPlayers[id] = serverPlayers[id];
+                }
             }
+            players = filteredPlayers;
+            playerCountElement.textContent = Object.keys(players).length;
         });
 
         socket.on('playerDisconnected', (id) => {
@@ -461,7 +1155,7 @@
 
         // Create off-screen canvas for metaball effect (at lower resolution for performance)
         const metaballCanvas = document.createElement('canvas');
-        const metaballCtx = metaballCanvas.getContext('2d');
+        const metaballCtx = metaballCanvas.getContext('2d', { willReadFrequently: true });
         let metaballScale = 0.5; // Render at half resolution
         let frameCount = 0;
 
@@ -475,7 +1169,7 @@
         // Settings
         let circleRadius = 60;
         let pulseEnabled = true;
-        let linesEnabled = true;
+        let linesEnabled = false;
         let fillEnabled = true;
         let outlineEnabled = false;
 
@@ -543,7 +1237,7 @@
 
         // Metaball toggle
         const metaballToggle = document.getElementById('metaball-toggle');
-        let metaballEnabled = true;
+        let metaballEnabled = false;
         metaballToggle.addEventListener('click', () => {
             metaballEnabled = !metaballEnabled;
             metaballToggle.classList.toggle('active');
@@ -559,6 +1253,161 @@
             metaballResolutionValue.textContent = metaballScale.toFixed(2);
             resizeMetaballCanvas();
         });
+
+        // Audio visualization controls
+        let playerRingsEnabled = false;
+
+        // Player rings toggle
+        const playerRingsToggle = document.getElementById('player-rings-toggle');
+        playerRingsToggle.addEventListener('click', () => {
+            playerRingsEnabled = !playerRingsEnabled;
+            playerRingsToggle.classList.toggle('active');
+            playerRingsToggle.querySelector('.status').textContent = playerRingsEnabled ? 'ON' : 'OFF';
+        });
+
+        // Lyria controls
+        let adaptiveMusicEnabled = true;
+
+        // Adaptive music toggle
+        const adaptiveMusicToggle = document.getElementById('adaptive-music-toggle');
+        adaptiveMusicToggle.addEventListener('click', () => {
+            adaptiveMusicEnabled = !adaptiveMusicEnabled;
+            adaptiveMusicToggle.classList.toggle('active');
+            adaptiveMusicToggle.querySelector('.status').textContent = adaptiveMusicEnabled ? 'ON' : 'OFF';
+        });
+
+        // Lyria BPM control
+        const lyriaBpmInput = document.getElementById('lyria-bpm');
+        const lyriaBpmValue = document.getElementById('lyria-bpm-value');
+        lyriaBpmInput.addEventListener('input', (e) => {
+            lyriaBpmValue.textContent = e.target.value;
+        });
+
+        // Lyria Temperature control
+        const lyriaTemperatureInput = document.getElementById('lyria-temperature');
+        const lyriaTemperatureValue = document.getElementById('lyria-temperature-value');
+        lyriaTemperatureInput.addEventListener('input', (e) => {
+            lyriaTemperatureValue.textContent = parseFloat(e.target.value).toFixed(1);
+        });
+
+        // Lyria Guidance control
+        const lyriaGuidanceInput = document.getElementById('lyria-guidance');
+        const lyriaGuidanceValue = document.getElementById('lyria-guidance-value');
+        lyriaGuidanceInput.addEventListener('input', (e) => {
+            lyriaGuidanceValue.textContent = parseFloat(e.target.value).toFixed(1);
+        });
+
+        // Lyria Density control
+        const lyriaDensityInput = document.getElementById('lyria-density');
+        const lyriaDensityValue = document.getElementById('lyria-density-value');
+        lyriaDensityInput.addEventListener('input', (e) => {
+            lyriaDensityValue.textContent = parseFloat(e.target.value).toFixed(2);
+        });
+
+        // Lyria Brightness control
+        const lyriaBrightnessInput = document.getElementById('lyria-brightness');
+        const lyriaBrightnessValue = document.getElementById('lyria-brightness-value');
+        lyriaBrightnessInput.addEventListener('input', (e) => {
+            lyriaBrightnessValue.textContent = parseFloat(e.target.value).toFixed(2);
+        });
+
+        // Apply Lyria configuration
+        const applyLyriaConfigBtn = document.getElementById('apply-lyria-config');
+        applyLyriaConfigBtn.addEventListener('click', async () => {
+            if (!window.lyriaSession) {
+                alert('Please connect to Lyria first');
+                return;
+            }
+
+            try {
+                const config = {
+                    bpm: parseInt(lyriaBpmInput.value),
+                    temperature: parseFloat(lyriaTemperatureInput.value),
+                    guidance: parseFloat(lyriaGuidanceInput.value),
+                    density: parseFloat(lyriaDensityInput.value),
+                    brightness: parseFloat(lyriaBrightnessInput.value),
+                    scale: document.getElementById('lyria-scale').value
+                };
+
+                console.log('Applying Lyria config:', config);
+                
+                await window.lyriaSession.setMusicGenerationConfig({
+                    musicGenerationConfig: config
+                });
+
+                console.log('✓ Lyria configuration updated');
+                
+                // Visual feedback
+                applyLyriaConfigBtn.textContent = '✓ APPLIED';
+                setTimeout(() => {
+                    applyLyriaConfigBtn.textContent = 'APPLY CONFIGURATION';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Failed to update Lyria config:', error);
+                alert('Failed to update configuration: ' + error.message);
+            }
+        });
+
+        // Update music every few seconds based on genre percentages
+        setInterval(() => {
+            if (window.lyriaSession && genrePercentages && adaptiveMusicEnabled) {
+                window.updateMusicFromGenres(genrePercentages);
+            }
+        }, 3000); // Update every 3 seconds
+
+        // Hamburger audio visualization
+        const hamburgerRings = document.getElementById('hamburger-rings');
+        let hamburgerPulseTime = 0;
+        let hamburgerRingsEnabled = true;
+
+        // Hamburger rings toggle
+        const hamburgerRingsToggle = document.getElementById('hamburger-rings-toggle');
+        hamburgerRingsToggle.addEventListener('click', () => {
+            hamburgerRingsEnabled = !hamburgerRingsEnabled;
+            hamburgerRingsToggle.classList.toggle('active');
+            hamburgerRingsToggle.querySelector('.status').textContent = hamburgerRingsEnabled ? 'ON' : 'OFF';
+            
+            // Clear rings immediately if disabled
+            if (!hamburgerRingsEnabled) {
+                hamburgerRings.innerHTML = '';
+            }
+        });
+
+        function drawHamburgerRings() {
+            if (!window.lyriaSession || !hamburgerRingsEnabled) {
+                hamburgerRings.innerHTML = '';
+                return;
+            }
+
+            hamburgerPulseTime += 0.05;
+            
+            // Create 3 pulsing rings
+            let svgContent = '<svg width="200" height="200" viewBox="0 0 200 200" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">';
+            
+            const numRings = 3;
+            const centerX = 100;
+            const centerY = 100;
+            const baseRadius = 20;
+            
+            for (let i = 0; i < numRings; i++) {
+                const ringPhase = (hamburgerPulseTime * 0.9) + (i * Math.PI * 0.66);
+                const ringPulse = (Math.sin(ringPhase) + 1) / 2; // 0 to 1
+                const ringRadius = baseRadius + 10 + (i * 15) + (ringPulse * 10);
+                const ringAlpha = (1 - ringPulse) * 0.4;
+                
+                svgContent += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" 
+                    fill="none" stroke="rgba(255,255,255,${ringAlpha})" stroke-width="2"/>`;
+            }
+            
+            svgContent += '</svg>';
+            hamburgerRings.innerHTML = svgContent;
+            
+            requestAnimationFrame(drawHamburgerRings);
+        }
+
+        // Start hamburger ring animation
+        drawHamburgerRings();
 
         function draw() {
             // Clear canvas with black background
@@ -756,6 +1605,29 @@
                             ctx.lineWidth = 3;
                             ctx.stroke();
                         }
+                    }
+                }
+            }
+            
+            // Draw audio visualization rings around players (if enabled)
+            if (playerRingsEnabled) {
+                for (const id in players) {
+                    const player = players[id];
+                    const pulseData = getPlayerPulseOffset(id);
+                    
+                    // Create multiple pulsing rings with different phases
+                    const numRings = 3;
+                    for (let i = 0; i < numRings; i++) {
+                        const ringPhase = (pulseTime * pulseData.speed * 0.8) + (i * Math.PI * 0.66);
+                        const ringPulse = (Math.sin(ringPhase) + 1) / 2; // 0 to 1
+                        const ringRadius = circleRadius + 20 + (i * 25) + (ringPulse * 15);
+                        const ringAlpha = (1 - ringPulse) * 0.4; // Fade out as it expands
+                        
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${ringAlpha})`;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(player.position.x, player.position.y, ringRadius, 0, Math.PI * 2);
+                        ctx.stroke();
                     }
                 }
             }

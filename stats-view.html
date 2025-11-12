@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>schwarm D.I. – Statistics Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #000000;
+            color: #ffffff;
+            padding: 15px;
+        }
+
+        .header {
+            border-bottom: 1px solid #ffffff;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffffff;
+        }
+
+        .status-dot.disconnected {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            border-left: 2px solid #ffffff;
+            padding: 10px 15px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .prompt-card {
+            border-left: 2px solid #ffffff;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+        }
+
+        .prompt-label {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .prompt-text {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .chart-container {
+            border-left: 2px solid #ffffff;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 11px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        .genre-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .genre-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .genre-name {
+            width: 90px;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #ffffff;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-right: 10px;
+            justify-content: flex-end;
+        }
+
+        .bar-percentage {
+            font-size: 9px;
+            font-weight: 700;
+            color: #000000;
+            min-width: 35px;
+            text-align: right;
+        }
+
+        .bar-percentage.outside {
+            color: #ffffff;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>schwarm D.I. – STATISTICS DASHBOARD</h1>
+        <div class="status">
+            <div class="status-item">
+                <div id="connection-dot" class="status-dot disconnected"></div>
+                <span id="connection-status">CONNECTING...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">PLAYERS CONNECTED</div>
+            <div class="stat-value" id="player-count">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">ACTIVE SESSIONS</div>
+            <div class="stat-value" id="session-count">1</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">UPTIME</div>
+            <div class="stat-value" id="uptime">00:00</div>
+        </div>
+    </div>
+
+    <div class="prompt-card">
+        <div class="prompt-label">CURRENT MUSIC PROMPT</div>
+        <div class="prompt-text" id="current-prompt">Waiting for music generation...</div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">GENRE DISTRIBUTION (LIVE)</div>
+        <div class="genre-bars">
+            <div class="genre-bar">
+                <div class="genre-name">TECHNO</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="bar-techno" style="width: 0%">
+                        <span class="bar-percentage" id="pct-techno">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="genre-bar">
+                <div class="genre-name">ELECTRO</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="bar-electro" style="width: 0%">
+                        <span class="bar-percentage" id="pct-electro">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="genre-bar">
+                <div class="genre-name">JAZZ</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="bar-jazz" style="width: 0%">
+                        <span class="bar-percentage" id="pct-jazz">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="genre-bar">
+                <div class="genre-name">HIP HOP</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="bar-hiphop" style="width: 0%">
+                        <span class="bar-percentage" id="pct-hiphop">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="genre-bar">
+                <div class="genre-name">CLASSICAL</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="bar-classical" style="width: 0%">
+                        <span class="bar-percentage" id="pct-classical">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="genre-bar">
+                <div class="genre-name">HOUSE</div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="bar-house" style="width: 0%">
+                        <span class="bar-percentage" id="pct-house">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">GENRE HISTORY (LAST 60 SECONDS)</div>
+        <div class="chart-wrapper">
+            <canvas id="history-chart"></canvas>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Socket.IO connection
+        const socket = io({ query: { viewer: 'true', stats: 'true' } });
+        
+        const connectionStatus = document.getElementById('connection-status');
+        const connectionDot = document.getElementById('connection-dot');
+        const playerCount = document.getElementById('player-count');
+        const currentPrompt = document.getElementById('current-prompt');
+        
+        // Genre names
+        const genres = ['techno', 'electro', 'jazz', 'hiphop', 'classical', 'house'];
+        
+        // Uptime tracking
+        let startTime = Date.now();
+        
+        function updateUptime() {
+            const elapsed = Date.now() - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('uptime').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        setInterval(updateUptime, 1000);
+        
+        // Socket events
+        socket.on('connect', () => {
+            connectionStatus.textContent = 'CONNECTED';
+            connectionDot.classList.remove('disconnected');
+        });
+        
+        socket.on('disconnect', () => {
+            connectionStatus.textContent = 'DISCONNECTED';
+            connectionDot.classList.add('disconnected');
+        });
+        
+        socket.on('players', (players) => {
+            // Count non-viewer players
+            let count = 0;
+            for (const id in players) {
+                if (id !== socket.id) count++;
+            }
+            playerCount.textContent = count;
+            
+            // Calculate genre percentages
+            updateGenreStats(players);
+        });
+        
+        socket.on('physicsUpdate', (players) => {
+            // Count non-viewer players
+            let count = 0;
+            for (const id in players) {
+                if (id !== socket.id) count++;
+            }
+            playerCount.textContent = count;
+            
+            // Calculate genre percentages
+            updateGenreStats(players);
+        });
+        
+        // Listen for prompt updates (we'll add this to server later)
+        socket.on('promptUpdate', (prompt) => {
+            currentPrompt.textContent = prompt;
+        });
+        
+        // Genre percentage calculation
+        function getPlayerGenre(x, y, canvasWidth, canvasHeight) {
+            const cols = 3;
+            const rows = 2;
+            const sectionWidth = canvasWidth / cols;
+            const sectionHeight = canvasHeight / rows;
+            
+            const col = Math.floor(x / sectionWidth);
+            const row = Math.floor(y / sectionHeight);
+            
+            if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                return row * cols + col;
+            }
+            return -1;
+        }
+        
+        function updateGenreStats(players) {
+            // Assume standard canvas size (will be updated by server)
+            const canvasWidth = 1920;
+            const canvasHeight = 1080;
+            
+            const genreCounts = [0, 0, 0, 0, 0, 0];
+            let totalPlayers = 0;
+            
+            for (const id in players) {
+                if (id === socket.id) continue; // Skip viewer
+                const pos = players[id].position;
+                const genreIndex = getPlayerGenre(pos.x, pos.y, canvasWidth, canvasHeight);
+                if (genreIndex >= 0) {
+                    genreCounts[genreIndex]++;
+                    totalPlayers++;
+                }
+            }
+            
+            // Update bars
+            genres.forEach((genre, index) => {
+                const percentage = totalPlayers > 0 ? (genreCounts[index] / totalPlayers) * 100 : 0;
+                const bar = document.getElementById(`bar-${genre}`);
+                const pct = document.getElementById(`pct-${genre}`);
+                
+                bar.style.width = `${percentage}%`;
+                pct.textContent = `${Math.round(percentage)}%`;
+                
+                // Move percentage outside if bar is too small
+                if (percentage < 15) {
+                    pct.classList.add('outside');
+                } else {
+                    pct.classList.remove('outside');
+                }
+            });
+            
+            // Update history chart
+            updateHistoryChart(genreCounts.map((count, i) => 
+                totalPlayers > 0 ? (count / totalPlayers) * 100 : 0
+            ));
+        }
+        
+        // History chart setup
+        const ctx = document.getElementById('history-chart').getContext('2d');
+        const maxDataPoints = 60; // 60 seconds of data
+        
+        const historyData = {
+            labels: Array(maxDataPoints).fill(''),
+            datasets: [
+                {
+                    label: 'TECHNO',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'ELECTRO',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    borderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'JAZZ',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: 'rgba(255, 255, 255, 0.6)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                    borderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'HIP HOP',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'CLASSICAL',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: 'rgba(255, 255, 255, 0.4)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    borderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'HOUSE',
+                    data: Array(maxDataPoints).fill(0),
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }
+            ]
+        };
+        
+        const historyChart = new Chart(ctx, {
+            type: 'line',
+            data: historyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                family: 'Roboto Mono',
+                                size: 10
+                            },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                family: 'Roboto Mono',
+                                size: 10
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            font: {
+                                family: 'Roboto Mono',
+                                size: 11
+                            },
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Update chart every second
+        function updateHistoryChart(percentages) {
+            // Shift data and add new point
+            historyData.datasets.forEach((dataset, index) => {
+                dataset.data.shift();
+                dataset.data.push(percentages[index]);
+            });
+            
+            historyChart.update('none'); // Update without animation for smooth real-time feel
+        }
+        
+        // Update chart every second
+        setInterval(() => {
+            // Chart will be updated by genre stats
+        }, 1000);
+    </script>
+</body>
+</html>

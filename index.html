@@ -27,16 +27,41 @@
             cursor: move;
         }
 
-        #info {
+
+        #joystick-container {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            color: white;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
             z-index: 100;
+        }
+
+        #joystick-base {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #joystick-stick {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #joystick-stick:active {
+            background: rgba(255, 255, 255, 1);
         }
 
         #connection-status {
@@ -90,6 +115,26 @@
             margin: 0 0 20px 0;
             font-size: 24px;
             color: #000000;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            height: 40px;
+            line-height: 40px;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            padding-right: 100%;
+            animation: ticker 15s linear infinite;
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
         }
 
         .name-input-container input {
@@ -169,7 +214,7 @@
 <body>
     <div id="name-modal">
         <div class="name-input-container">
-            <h2>Enter Your Name</h2>
+            <h2><span class="ticker-content">Enter Your Name • Enter Your Name • Enter Your Name • Enter Your Name • Enter Your Name</span></h2>
             <input type="text" id="player-name-input" placeholder="Your name" maxlength="20" autocomplete="off">
             
             <div class="shape-selector">
@@ -197,11 +242,14 @@
         </div>
     </div>
 
-    <div id="connection-status" class="disconnected">Connecting...</div>
-    <div id="info">
-        <div>Players: <span id="player-count">0</span></div>
-        <div>Your ID: <span id="player-id">-</span></div>
+    <div id="connection-status" class="disconnected">Not Connected</div>
+    
+    <div id="joystick-container">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
     </div>
+    
     <canvas id="canvas"></canvas>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -209,8 +257,6 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const statusElement = document.getElementById('connection-status');
-        const playerCountElement = document.getElementById('player-count');
-        const playerIdElement = document.getElementById('player-id');
 
         // Set canvas size
         function resizeCanvas() {
@@ -224,9 +270,19 @@
         let players = {};
         let myId = null;
         let myPosition = { x: canvas.width / 2, y: canvas.height / 2 };
-        let isDragging = false;
         let myName = '';
         let myShape = 'circle';
+        
+        // Joystick state
+        let joystickActive = false;
+        let joystickDirection = { x: 0, y: 0 };
+        
+        // Virtual canvas bounds (independent of client window size)
+        // This allows movement across full server display area
+        const virtualBounds = {
+            width: 3840,  // Large virtual space
+            height: 2160
+        };
 
         // Name modal elements
         const nameModal = document.getElementById('name-modal');
@@ -253,10 +309,11 @@
             myName = name;
             nameModal.classList.add('hidden');
             
-            // Send name and shape to server if already connected
-            if (myId) {
-                socket.emit('setName', myName);
-                socket.emit('setShape', myShape);
+            // Initialize socket connection when user clicks Start
+            if (!socket) {
+                statusElement.textContent = 'Connecting...';
+                statusElement.className = 'disconnected';
+                initializeSocket();
             }
         }
 
@@ -272,102 +329,141 @@
             nameInput.focus();
         });
 
-        // Socket.IO connection
-        const socket = io();
+        // Socket will be initialized when user clicks Start
+        let socket = null;
 
-        socket.on('connect', () => {
-            statusElement.textContent = 'Connected';
-            statusElement.className = 'connected';
-            console.log('Connected to server');
-        });
+        function initializeSocket() {
+            // Socket.IO connection
+            socket = io();
 
-        socket.on('disconnect', () => {
-            statusElement.textContent = 'Disconnected';
-            statusElement.className = 'disconnected';
-            console.log('Disconnected from server');
-        });
+            socket.on('connect', () => {
+                statusElement.textContent = 'Connected';
+                statusElement.className = 'connected';
+                console.log('Connected to server');
+                
+                // Send name and shape immediately after connection
+                if (myName) {
+                    socket.emit('setName', myName);
+                    socket.emit('setShape', myShape);
+                }
+            });
 
-        socket.on('init', (data) => {
-            myId = data.id;
-            playerIdElement.textContent = myId.substring(0, 8);
-            myPosition = data.position;
-            console.log('Initialized with ID:', myId);
-        });
+            socket.on('disconnect', () => {
+                statusElement.textContent = 'Disconnected';
+                statusElement.className = 'disconnected';
+                console.log('Disconnected from server');
+            });
 
-        socket.on('players', (serverPlayers) => {
-            players = serverPlayers;
-            playerCountElement.textContent = Object.keys(players).length;
-        });
+            socket.on('init', (data) => {
+                myId = data.id;
+                myPosition = data.position;
+                console.log('Initialized with ID:', myId);
+            });
 
-        socket.on('playerMoved', (data) => {
-            if (players[data.id]) {
-                players[data.id].position = data.position;
+            socket.on('players', (serverPlayers) => {
+                players = serverPlayers;
+            });
+
+            socket.on('physicsUpdate', (serverPlayers) => {
+                // Update all player positions from server physics
+                players = serverPlayers;
+                if (players[myId]) {
+                    myPosition = players[myId].position;
+                }
+            });
+
+            socket.on('playerDisconnected', (id) => {
+                delete players[id];
+            });
+        }
+
+        // Joystick handling
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickStick = document.getElementById('joystick-stick');
+        
+        const joystickRadius = 125; // Base radius
+        const stickRadius = 75; // Max distance stick can move from center
+        
+        function updateJoystick(clientX, clientY) {
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let deltaX = clientX - centerX;
+            let deltaY = clientY - centerY;
+            
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Limit stick movement to stickRadius
+            if (distance > stickRadius) {
+                const angle = Math.atan2(deltaY, deltaX);
+                deltaX = Math.cos(angle) * stickRadius;
+                deltaY = Math.sin(angle) * stickRadius;
             }
-        });
-
-        socket.on('playerDisconnected', (id) => {
-            delete players[id];
-            playerCountElement.textContent = Object.keys(players).length;
-        });
-
-        // Input handling
-        function getInputPosition(e) {
-            const rect = canvas.getBoundingClientRect();
-            let clientX, clientY;
-
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
+            
+            // Update stick position
+            joystickStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            // Calculate direction (normalized)
+            joystickDirection.x = deltaX / stickRadius;
+            joystickDirection.y = deltaY / stickRadius;
+        }
+        
+        function resetJoystick() {
+            joystickStick.style.transform = 'translate(0px, 0px)';
+            joystickDirection.x = 0;
+            joystickDirection.y = 0;
+            joystickActive = false;
+        }
+        
+        function startJoystick(e) {
+            e.preventDefault();
+            joystickActive = true;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            updateJoystick(clientX, clientY);
+        }
+        
+        function moveJoystick(e) {
+            if (!joystickActive) return;
+            e.preventDefault();
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            updateJoystick(clientX, clientY);
+        }
+        
+        function endJoystick(e) {
+            e.preventDefault();
+            resetJoystick();
+        }
+        
+        // Touch events for joystick
+        joystickContainer.addEventListener('touchstart', startJoystick);
+        joystickContainer.addEventListener('touchmove', moveJoystick);
+        joystickContainer.addEventListener('touchend', endJoystick);
+        
+        // Mouse events for joystick
+        joystickContainer.addEventListener('mousedown', startJoystick);
+        document.addEventListener('mousemove', moveJoystick);
+        document.addEventListener('mouseup', endJoystick);
+        
+        // Send joystick input to server for physics processing
+        function sendMovementInput() {
+            if (socket && socket.connected && (joystickActive || (joystickDirection.x !== 0 || joystickDirection.y !== 0))) {
+                socket.emit('moveInput', {
+                    x: joystickDirection.x,
+                    y: joystickDirection.y
+                });
             }
-
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
         }
-
-        function startDrag(e) {
-            e.preventDefault();
-            const pos = getInputPosition(e);
-            const dx = pos.x - myPosition.x;
-            const dy = pos.y - myPosition.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            // Only start dragging if touching near the circle (within 80px radius for easier mobile touch)
-            if (distance < 80) {
-                isDragging = true;
-            }
-        }
-
-        function drag(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-
-            const pos = getInputPosition(e);
-            myPosition.x = Math.max(30, Math.min(canvas.width - 30, pos.x));
-            myPosition.y = Math.max(30, Math.min(canvas.height - 30, pos.y));
-
-            socket.emit('move', myPosition);
-        }
-
-        function endDrag(e) {
-            e.preventDefault();
-            isDragging = false;
-        }
-
-        // Touch events
-        canvas.addEventListener('touchstart', startDrag);
-        canvas.addEventListener('touchmove', drag);
-        canvas.addEventListener('touchend', endDrag);
-
-        // Mouse events
-        canvas.addEventListener('mousedown', startDrag);
-        canvas.addEventListener('mousemove', drag);
-        canvas.addEventListener('mouseup', endDrag);
-        canvas.addEventListener('mouseleave', endDrag);
+        
+        // Send input at regular intervals (~60fps)
+        setInterval(sendMovementInput, 16);
 
         // Draw dot grid background
         function drawGrid() {
@@ -477,13 +573,8 @@
             // Draw grid background
             drawGrid();
 
-            // MOBILE VIEW: Only draw my own shape (no other players, no connection lines)
-            // Draw my shape - matching server scale (60px size)
-            if (myId && players[myId]) {
-                const playerName = players[myId].name || '';
-                const playerShape = players[myId].shape || 'circle';
-                drawShape(myPosition.x, myPosition.y, 60, playerShape, true, playerName);
-            }
+            // MOBILE CLIENT: Only joystick control visible, no ball preview
+            // All balls are only visible on the server view
 
             requestAnimationFrame(draw);
         }
