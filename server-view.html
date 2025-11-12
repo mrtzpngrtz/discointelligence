@@ -526,6 +526,13 @@
         </div>
 
         <div class="control-group">
+            <div class="toggle-button active" id="names-toggle">
+                <span>PLAYER NAMES</span>
+                <div class="status">ON</div>
+            </div>
+        </div>
+
+        <div class="control-group">
             <div class="toggle-button active" id="metaball-toggle">
                 <span>METABALL EFFECT</span>
                 <div class="status">ON</div>
@@ -1405,6 +1412,15 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             outlineToggle.querySelector('.status').textContent = outlineEnabled ? 'ON' : 'OFF';
         });
 
+        // Names toggle
+        let namesEnabled = true;
+        const namesToggle = document.getElementById('names-toggle');
+        namesToggle.addEventListener('click', () => {
+            namesEnabled = !namesEnabled;
+            namesToggle.classList.toggle('active');
+            namesToggle.querySelector('.status').textContent = namesEnabled ? 'ON' : 'OFF';
+        });
+
         // Metaball toggle
         const metaballToggle = document.getElementById('metaball-toggle');
         let metaballEnabled = false;
@@ -1815,11 +1831,12 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                 }
             }
             
-            // Draw player names on top
-            for (const id in players) {
-                const player = players[id];
-                const playerName = player.name || '';
-                if (playerName) {
+            // Draw player names on top (if enabled)
+            if (namesEnabled) {
+                for (const id in players) {
+                    const player = players[id];
+                    const playerName = player.name || '';
+                    if (playerName) {
                     ctx.font = '300 16px "Roboto Mono"';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
@@ -1839,9 +1856,10 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                         textHeight
                     );
                     
-                    // Draw text
-                    ctx.fillStyle = 'black';
-                    ctx.fillText(playerName, player.position.x, player.position.y);
+                        // Draw text
+                        ctx.fillStyle = 'black';
+                        ctx.fillText(playerName, player.position.x, player.position.y);
+                    }
                 }
             }
 
