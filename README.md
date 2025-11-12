@@ -8,7 +8,7 @@
          ♪♫•*¨*•.¸¸♪ SCHWARM D.I. ♪¸¸.•*¨*•♫♪
 ```
 
-A prototype for collective music generation where players influence real-time AI-generated music through their spatial distribution.
+A prototype for collective music generation where players influence real-time AI-generated music through their genre preferences.
 
 **An experiment in collaborative interaction with real-time generative music using Gemini Flash and Lyria.**
 
@@ -26,13 +26,13 @@ The system creates collective music generation through player distribution and A
 
 1. **Genre Selection**: Players choose their preferred music genre on their mobile devices.
 
-2. **Spatial Distribution**: Player interactions with their smartphone joystick are tracked in real-time via Socket.IO WebSockets, creating a dynamic spatial map of genre preferences across the play area.
+2. **Genre Distribution Tracking**: Player genre selections are tracked in real-time via Socket.IO WebSockets, calculating the percentage distribution of players across different genres.
 
-3. **AI Prompt Generation with Gemini Flash**: The percentage distribution of players across different genres is continuously analyzed and sent to Google's Gemini Flash model, which generates contextual prompts that capture the current collective musical intent.
+3. **AI Prompt Generation with Gemini Flash**: The percentage distribution of genre preferences is sent to Google's Gemini Flash model, which generates contextual prompts that capture the current collective musical intent.
 
 4. **Real-time Music Generation with Lyria**: Based on Gemini Flash's generated prompts, Google's Lyria music generation model creates adaptive, real-time music that reflects the evolving distribution and preferences of all players.
 
-5. **Emergent Soundscape**: The collective choices and spatial arrangements of players create an ever-changing musical landscape, where individual actions contribute to a shared generative experience.
+5. **Emergent Soundscape**: The collective genre choices of players create an ever-changing musical landscape, where individual preferences contribute to a shared generative experience.
 
 ## Features
 
