@@ -2,11 +2,19 @@
   "genres": [
     "DAFT PUNK CHILLING ON A SPACESHIP",
     "ERRORS IN A QUANTUM COMPUTER",
-    "JAZZ FROM MARS",
-    "HIP HOP FROM THE 1980S",
+    "SUMMER JAZZ WITH GIN",
+    "HIP HOP FROM THE FUTURE",
     "BIRTH OF KETCHUP BY MAX RICHTER",
     "THROAT SINGING IN THE BERLIN SUBWAY",
-    "NOISES ON THE MOON",
-    "GERMAN FOLK WITH A MOOG SYNTH"
-  ]
+    "LONELY GUITAR ON THE MOON",
+    "SLOW DANCE WITH A MOOG SYNTH"
+  ],
+  "colorPresets": {
+    "standard": ["#202020", "#454545", "#777777", "#ffffff", "#000000"],
+    "neon": ["#ff00ff", "#00ffff", "#ff6600", "#00ff00", "#ffffff"],
+    "fire": ["#000000", "#ff0000", "#ff6600", "#ffff00", "#ffffff"],
+    "ocean": ["#000033", "#0066ff", "#00ffff", "#66ffff", "#ffffff"],
+    "purple": ["#000000", "#4b0082", "#9400d3", "#ff00ff", "#ffffff"]
+  },
+  "defaultColorPreset": "standard"
 }

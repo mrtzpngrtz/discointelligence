@@ -19,10 +19,23 @@
             background: #000000;
         }
 
-        #canvas {
-            display: block;
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
+            z-index: 1;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+            pointer-events: auto;
         }
 
         #ui-bar {
@@ -479,18 +492,6 @@
         </div>
 
         <div class="control-group">
-            <label>NUMBER OF RINGS</label>
-            <input type="range" id="num-rings" min="1" max="20" value="5" step="1">
-            <div class="value-display"><span id="num-rings-value">5</span> rings</div>
-        </div>
-
-        <div class="control-group">
-            <label>RING WIDTH</label>
-            <input type="range" id="ring-width" min="1" max="10" value="4" step="1">
-            <div class="value-display"><span id="ring-width-value">4</span>px</div>
-        </div>
-
-        <div class="control-group">
             <div class="toggle-button active" id="pulse-toggle">
                 <span>PULSE</span>
                 <div class="status">ON</div>
@@ -532,17 +533,55 @@
             </div>
         </div>
 
+
+        <h3 style="margin-top: 30px;">WEBGL EFFECTS</h3>
+
         <div class="control-group">
-            <div class="toggle-button active" id="metaball-toggle">
+            <div class="toggle-button active" id="webgl-toggle">
                 <span>METABALL EFFECT</span>
                 <div class="status">ON</div>
             </div>
         </div>
 
         <div class="control-group">
-            <label>METABALL RESOLUTION</label>
-            <input type="range" id="metaball-resolution" min="0.25" max="1" value="0.5" step="0.05">
-            <div class="value-display"><span id="metaball-resolution-value">0.5</span>x</div>
+            <label>COLOR PRESETS</label>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <button class="preset-btn" data-preset="standard" style="flex: 1; padding: 8px; background: linear-gradient(90deg, #000000, #808080, #ffffff, #808080, #000000); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 10px;">STANDARD</button>
+                <button class="preset-btn" data-preset="neon" style="flex: 1; padding: 8px; background: linear-gradient(90deg, #ff00ff, #00ffff, #ff6600, #00ff00, #ffffff); color: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 10px;">NEON</button>
+            </div>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
+                <button class="preset-btn" data-preset="fire" style="flex: 1; padding: 8px; background: linear-gradient(90deg, #000000, #ff0000, #ff6600, #ffff00, #ffffff); color: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 10px;">FIRE</button>
+                <button class="preset-btn" data-preset="ocean" style="flex: 1; padding: 8px; background: linear-gradient(90deg, #000033, #0066ff, #00ffff, #66ffff, #ffffff); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 10px;">OCEAN</button>
+            </div>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
+                <button class="preset-btn" data-preset="purple" style="flex: 1; padding: 8px; background: linear-gradient(90deg, #000000, #4b0082, #9400d3, #ff00ff, #ffffff); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 10px;">PURPLE</button>
+                <button class="preset-btn" data-preset="random" style="flex: 1; padding: 8px; background: linear-gradient(90deg, #ff0000, #00ff00, #0000ff, #ffff00, #ff00ff); color: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 10px;">RANDOM</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>COLOR 1 (Base)</label>
+            <input type="color" id="color-1" value="#000000" style="width: 100%; height: 35px; background: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer;">
+        </div>
+
+        <div class="control-group">
+            <label>COLOR 2</label>
+            <input type="color" id="color-2" value="#808080" style="width: 100%; height: 35px; background: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer;">
+        </div>
+
+        <div class="control-group">
+            <label>COLOR 3</label>
+            <input type="color" id="color-3" value="#ffffff" style="width: 100%; height: 35px; background: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer;">
+        </div>
+
+        <div class="control-group">
+            <label>COLOR 4</label>
+            <input type="color" id="color-4" value="#808080" style="width: 100%; height: 35px; background: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer;">
+        </div>
+
+        <div class="control-group">
+            <label>COLOR 5 (Highlights)</label>
+            <input type="color" id="color-5" value="#000000" style="width: 100%; height: 35px; background: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer;">
         </div>
 
         <h3 style="margin-top: 30px;">AUDIO VISUALIZATION</h3>
@@ -641,6 +680,7 @@
         </div>
     </div>
 
+    <canvas id="webgl-canvas"></canvas>
     <canvas id="canvas"></canvas>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -661,6 +701,11 @@
                 this.audioQueue = [];
                 this.nextChunkTime = 0;
                 this.isPlaying = false;
+
+                // Create gain node for volume control
+                this.gainNode = this.audioContext.createGain();
+                this.gainNode.connect(this.audioContext.destination);
+                this.gainNode.gain.value = 1.0; // Default full volume
 
                 if (this.audioContext.state === 'suspended') {
                     console.warn('AudioContext suspended. User interaction required.');
@@ -724,7 +769,7 @@
 
                 const source = this.audioContext.createBufferSource();
                 source.buffer = audioBuffer;
-                source.connect(this.audioContext.destination);
+                source.connect(this.gainNode); // Connect through gain node for volume control
                 source.start(this.nextChunkTime);
                 this.nextChunkTime += audioBuffer.duration;
 
@@ -761,12 +806,7 @@
             const volume = parseInt(e.target.value) / 100;
             volumeLabel.textContent = `${e.target.value}%`;
             
-            if (window.audioPlayer && window.audioPlayer.audioContext) {
-                // Create gain node if it doesn't exist
-                if (!window.audioPlayer.gainNode) {
-                    window.audioPlayer.gainNode = window.audioPlayer.audioContext.createGain();
-                    window.audioPlayer.gainNode.connect(window.audioPlayer.audioContext.destination);
-                }
+            if (window.audioPlayer && window.audioPlayer.gainNode) {
                 window.audioPlayer.gainNode.gain.value = volume;
             }
         });
@@ -1023,6 +1063,10 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
 
         // Game state
         let players = {};
+        
+        // Drag and drop state (declare early for socket handlers)
+        let draggedPlayer = null;
+        let dragOffset = { x: 0, y: 0 };
 
         // Socket.IO connection (viewer only, no interaction)
         const socket = io({ query: { viewer: 'true' } });
@@ -1032,6 +1076,13 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
+            // Resize WebGL canvas
+            webglCanvas.width = window.innerWidth;
+            webglCanvas.height = window.innerHeight;
+            if (gl) {
+                gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
+            }
+            
             // Send canvas dimensions to server for physics boundaries
             if (socket && socket.connected) {
                 socket.emit('updateBounds', {
@@ -1040,6 +1091,439 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                 });
             }
         }
+        
+        // =============================================
+        // WebGL Metaball Shader Setup
+        // =============================================
+        
+        const webglCanvas = document.getElementById('webgl-canvas');
+        const gl = webglCanvas.getContext('webgl') || webglCanvas.getContext('experimental-webgl');
+        
+        if (!gl) {
+            console.error('WebGL not supported');
+        }
+        
+        // Vertex shader (simple pass-through)
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+        
+        // Fragment shader (converted from ShaderToy)
+        const fragmentShaderSource = `
+            precision highp float;
+            
+            uniform vec2 iResolution;
+            uniform float iTime;
+            uniform vec2 iMouse;
+            uniform int playerCount;
+            uniform vec2 playerPositions[32];  // Max 32 players
+            uniform vec3 customColor1;
+            uniform vec3 customColor2;
+            uniform vec3 customColor3;
+            uniform vec3 customColor4;
+            uniform vec3 customColor5;
+            
+            float k = 20.0;
+            float field = 0.0;
+            vec2 coord;
+            
+            vec2 center(vec2 border, vec2 offset, vec2 vel) {
+                vec2 c;
+                if (vel.x == 0.0 && vel.y == 0.0) {
+                    c = vec2(iMouse.x, iMouse.y);	
+                } else {
+                    c = offset + vel * iTime * 0.5;
+                    c = mod(c, 2.0 - 4.0 * border);
+                    if (c.x > 1.0 - border.x) c.x = 2.0 - c.x - 2.0 * border.x;
+                    if (c.x < border.x) c.x = 2.0 * border.x - c.x;
+                    if (c.y > 1.0 - border.y) c.y = 2.0 - c.y - 2.0 * border.y;
+                    if (c.y < border.y) c.y = 2.0 * border.y - c.y;
+                }
+                return c;
+            }
+            
+            void circle(float r, vec3 col, vec2 offset, vec2 vel) {
+                vec2 pos = coord.xy / iResolution.y;
+                float aspect = iResolution.x / iResolution.y;
+                vec2 c = center(vec2(r / aspect, r), offset, vel);
+                c.x *= aspect;
+                float d = distance(pos, c);
+                field += (k * r) / (d * d);
+            }
+            
+            vec3 band(float shade, float low, float high, vec3 col1, vec3 col2) {
+                if ((shade >= low) && (shade <= high)) {
+                    float delta = (shade - low) / (high - low);
+                    vec3 colDiff = col2 - col1;
+                    return col1 + (delta * colDiff);
+                } else {
+                    return vec3(0.0, 0.0, 0.0);
+                }
+            }
+            
+            vec3 gradient(float shade) {
+                // Use custom colors from UI
+                vec3 colour = vec3(0.0);
+                
+                colour += band(shade, 0.0, 0.2, colour, customColor1);
+                colour += band(shade, 0.2, 0.4, customColor1, customColor2);
+                colour += band(shade, 0.4, 0.6, customColor2, customColor3);
+                colour += band(shade, 0.6, 0.8, customColor3, customColor4);
+                colour += band(shade, 0.8, 1.0, customColor4, customColor5);
+                
+                return colour;
+            }
+            
+            void main() {
+                coord = gl_FragCoord.xy;
+                field = 0.0;
+                
+                // Draw metaballs for each player
+                for (int i = 0; i < 32; i++) {
+                    if (i >= playerCount) break;
+                    
+                    vec2 playerPos = playerPositions[i];
+                    vec2 normalizedPos = playerPos / iResolution;
+                    
+                    // Add wobble effect - each metaball has a unique phase based on its index
+                    float wobbleSpeed = 1.5;
+                    float wobbleAmount = 0.015; // Small wobble radius
+                    float phase = float(i) * 2.3; // Unique phase for each metaball
+                    
+                    float wobbleX = sin(iTime * wobbleSpeed + phase) * wobbleAmount;
+                    float wobbleY = cos(iTime * wobbleSpeed * 1.3 + phase * 1.7) * wobbleAmount;
+                    
+                    // Create metaball at player position with wobble
+                    vec2 pos = coord.xy / iResolution.y;
+                    float aspect = iResolution.x / iResolution.y;
+                    vec2 c = normalizedPos;
+                    c.x *= aspect;
+                    c.x += wobbleX;
+                    c.y += wobbleY;
+                    
+                    float r = 0.08;  // Size of each metaball
+                    float d = distance(pos, c);
+                    field += (k * r) / (d * d);
+                }
+                
+                // Add subtle animated background metaballs for ambient effect (reduced visibility)
+                circle(0.008, vec3(0.5), vec2(0.3, 0.4), vec2(0.15, 0.10));
+                circle(0.010, vec3(0.5), vec2(0.7, 0.3), vec2(0.08, 0.12));
+                circle(0.008, vec3(0.5), vec2(0.5, 0.7), vec2(0.12, 0.08));
+                circle(0.012, vec3(0.5), vec2(0.2, 0.6), vec2(0.10, 0.15));
+                
+                float shade = min(1.0, max(field / 256.0, 0.0));
+                
+                gl_FragColor = vec4(gradient(shade), 1.0);
+            }
+        `;
+        
+        // Compile shader
+        function compileShader(source, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+        
+        // Create shader program
+        const vertexShader = compileShader(vertexShaderSource, gl.VERTEX_SHADER);
+        const fragmentShader = compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+        
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            console.error('Shader program linking error:', gl.getProgramInfoLog(shaderProgram));
+        }
+        
+        gl.useProgram(shaderProgram);
+        
+        // Set up geometry (full-screen quad)
+        const positions = new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+             1,  1
+        ]);
+        
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+        
+        const positionLocation = gl.getAttribLocation(shaderProgram, 'a_position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        // Get uniform locations
+        const iResolutionLocation = gl.getUniformLocation(shaderProgram, 'iResolution');
+        const iTimeLocation = gl.getUniformLocation(shaderProgram, 'iTime');
+        const iMouseLocation = gl.getUniformLocation(shaderProgram, 'iMouse');
+        const playerCountLocation = gl.getUniformLocation(shaderProgram, 'playerCount');
+        const playerPositionsLocation = gl.getUniformLocation(shaderProgram, 'playerPositions');
+        const customColor1Location = gl.getUniformLocation(shaderProgram, 'customColor1');
+        const customColor2Location = gl.getUniformLocation(shaderProgram, 'customColor2');
+        const customColor3Location = gl.getUniformLocation(shaderProgram, 'customColor3');
+        const customColor4Location = gl.getUniformLocation(shaderProgram, 'customColor4');
+        const customColor5Location = gl.getUniformLocation(shaderProgram, 'customColor5');
+        
+        // Helper function to convert hex to RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16) / 255,
+                g: parseInt(result[2], 16) / 255,
+                b: parseInt(result[3], 16) / 255
+            } : { r: 1, g: 0, b: 1 };
+        }
+        
+        // Store current colors (Standard preset by default)
+        let metaballColors = {
+            color1: hexToRgb('#000000'),
+            color2: hexToRgb('#808080'),
+            color3: hexToRgb('#ffffff'),
+            color4: hexToRgb('#808080'),
+            color5: hexToRgb('#000000')
+        };
+        
+        let startTime = Date.now();
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        
+        // Track mouse movement for shader
+        webglCanvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = window.innerHeight - e.clientY;  // Flip Y coordinate
+        });
+        
+        // Render WebGL metaballs
+        function renderMetaballs() {
+            if (!gl) return;
+            
+            const time = (Date.now() - startTime) / 1000.0;
+            
+            // Clear
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            // Update uniforms
+            gl.uniform2f(iResolutionLocation, webglCanvas.width, webglCanvas.height);
+            gl.uniform1f(iTimeLocation, time);
+            gl.uniform2f(iMouseLocation, mouseX, mouseY);
+            
+            // Update player positions
+            const playerArray = Object.values(players);
+            const playerCount = Math.min(playerArray.length, 32);
+            gl.uniform1i(playerCountLocation, playerCount);
+            
+            // Create flat array of player positions
+            const positions = new Float32Array(64);  // 32 players * 2 coords
+            for (let i = 0; i < playerCount; i++) {
+                const player = playerArray[i];
+                positions[i * 2] = player.position.x;
+                positions[i * 2 + 1] = webglCanvas.height - player.position.y;  // Flip Y
+            }
+            gl.uniform2fv(playerPositionsLocation, positions);
+            
+            // Update color uniforms
+            gl.uniform3f(customColor1Location, metaballColors.color1.r, metaballColors.color1.g, metaballColors.color1.b);
+            gl.uniform3f(customColor2Location, metaballColors.color2.r, metaballColors.color2.g, metaballColors.color2.b);
+            gl.uniform3f(customColor3Location, metaballColors.color3.r, metaballColors.color3.g, metaballColors.color3.b);
+            gl.uniform3f(customColor4Location, metaballColors.color4.r, metaballColors.color4.g, metaballColors.color4.b);
+            gl.uniform3f(customColor5Location, metaballColors.color5.r, metaballColors.color5.g, metaballColors.color5.b);
+            
+            // Draw
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+        
+        // Color picker event listeners
+        document.getElementById('color-1').addEventListener('input', (e) => {
+            metaballColors.color1 = hexToRgb(e.target.value);
+            console.log('Color 1 updated:', e.target.value);
+        });
+        
+        document.getElementById('color-2').addEventListener('input', (e) => {
+            metaballColors.color2 = hexToRgb(e.target.value);
+            console.log('Color 2 updated:', e.target.value);
+        });
+        
+        document.getElementById('color-3').addEventListener('input', (e) => {
+            metaballColors.color3 = hexToRgb(e.target.value);
+            console.log('Color 3 updated:', e.target.value);
+        });
+        
+        document.getElementById('color-4').addEventListener('input', (e) => {
+            metaballColors.color4 = hexToRgb(e.target.value);
+            console.log('Color 4 updated:', e.target.value);
+        });
+        
+        document.getElementById('color-5').addEventListener('input', (e) => {
+            metaballColors.color5 = hexToRgb(e.target.value);
+            console.log('Color 5 updated:', e.target.value);
+        });
+        
+        // Color preset definitions - loaded from config.json
+        let colorPresets = {};
+        let defaultColorPreset = 'standard';
+        
+        // Load config from server
+        fetch('/config.json')
+            .then(response => response.json())
+            .then(config => {
+                if (config.colorPresets) {
+                    colorPresets = config.colorPresets;
+                    console.log('Loaded color presets from config:', colorPresets);
+                }
+                if (config.defaultColorPreset) {
+                    defaultColorPreset = config.defaultColorPreset;
+                    // Apply default preset
+                    applyColorPreset(defaultColorPreset);
+                    console.log('Applied default color preset:', defaultColorPreset);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load config.json, using fallback presets:', error);
+                // Fallback presets
+                colorPresets = {
+                    standard: ['#000000', '#808080', '#ffffff', '#808080', '#000000'],
+                    neon: ['#ff00ff', '#00ffff', '#ff6600', '#00ff00', '#ffffff'],
+                    fire: ['#000000', '#ff0000', '#ff6600', '#ffff00', '#ffffff'],
+                    ocean: ['#000033', '#0066ff', '#00ffff', '#66ffff', '#ffffff'],
+                    purple: ['#000000', '#4b0082', '#9400d3', '#ff00ff', '#ffffff']
+                };
+            });
+        
+        // Random color animation state
+        let randomModeActive = false;
+        let randomTargetColors = {
+            color1: { r: 0, g: 0, b: 0 },
+            color2: { r: 0, g: 0, b: 0 },
+            color3: { r: 1, g: 1, b: 1 },
+            color4: { r: 0, g: 0, b: 0 },
+            color5: { r: 0, g: 0, b: 0 }
+        };
+        let randomColorTransitionSpeed = 0.002; // Slow transition
+        
+        // Generate random color
+        function generateRandomColor() {
+            return {
+                r: Math.random(),
+                g: Math.random(),
+                b: Math.random()
+            };
+        }
+        
+        // Convert RGB object to hex
+        function rgbToHex(rgb) {
+            const r = Math.round(rgb.r * 255).toString(16).padStart(2, '0');
+            const g = Math.round(rgb.g * 255).toString(16).padStart(2, '0');
+            const b = Math.round(rgb.b * 255).toString(16).padStart(2, '0');
+            return `#${r}${g}${b}`;
+        }
+        
+        // Lerp between two colors
+        function lerpColor(color1, color2, t) {
+            return {
+                r: color1.r + (color2.r - color1.r) * t,
+                g: color1.g + (color2.g - color1.g) * t,
+                b: color1.b + (color2.b - color1.b) * t
+            };
+        }
+        
+        // Generate new random target colors
+        function generateNewRandomTargets() {
+            randomTargetColors.color1 = generateRandomColor();
+            randomTargetColors.color2 = generateRandomColor();
+            randomTargetColors.color3 = generateRandomColor();
+            randomTargetColors.color4 = generateRandomColor();
+            randomTargetColors.color5 = generateRandomColor();
+        }
+        
+        // Animate random colors
+        function animateRandomColors() {
+            if (!randomModeActive) return;
+            
+            // Smoothly transition current colors toward targets
+            metaballColors.color1 = lerpColor(metaballColors.color1, randomTargetColors.color1, randomColorTransitionSpeed);
+            metaballColors.color2 = lerpColor(metaballColors.color2, randomTargetColors.color2, randomColorTransitionSpeed);
+            metaballColors.color3 = lerpColor(metaballColors.color3, randomTargetColors.color3, randomColorTransitionSpeed);
+            metaballColors.color4 = lerpColor(metaballColors.color4, randomTargetColors.color4, randomColorTransitionSpeed);
+            metaballColors.color5 = lerpColor(metaballColors.color5, randomTargetColors.color5, randomColorTransitionSpeed);
+            
+            // Update color pickers to show current colors
+            document.getElementById('color-1').value = rgbToHex(metaballColors.color1);
+            document.getElementById('color-2').value = rgbToHex(metaballColors.color2);
+            document.getElementById('color-3').value = rgbToHex(metaballColors.color3);
+            document.getElementById('color-4').value = rgbToHex(metaballColors.color4);
+            document.getElementById('color-5').value = rgbToHex(metaballColors.color5);
+            
+            // Check if we're close enough to targets, then generate new ones
+            const threshold = 0.01;
+            const isCloseToTarget = 
+                Math.abs(metaballColors.color1.r - randomTargetColors.color1.r) < threshold &&
+                Math.abs(metaballColors.color1.g - randomTargetColors.color1.g) < threshold &&
+                Math.abs(metaballColors.color1.b - randomTargetColors.color1.b) < threshold;
+            
+            if (isCloseToTarget) {
+                generateNewRandomTargets();
+            }
+        }
+        
+        // Apply color preset
+        function applyColorPreset(presetName) {
+            if (presetName === 'random') {
+                // Enable random mode
+                randomModeActive = true;
+                generateNewRandomTargets();
+                console.log('Random color mode activated');
+                return;
+            }
+            
+            // Disable random mode for other presets
+            randomModeActive = false;
+            
+            const colors = colorPresets[presetName];
+            if (!colors) return;
+            
+            // Update color pickers
+            document.getElementById('color-1').value = colors[0];
+            document.getElementById('color-2').value = colors[1];
+            document.getElementById('color-3').value = colors[2];
+            document.getElementById('color-4').value = colors[3];
+            document.getElementById('color-5').value = colors[4];
+            
+            // Update metaball colors
+            metaballColors.color1 = hexToRgb(colors[0]);
+            metaballColors.color2 = hexToRgb(colors[1]);
+            metaballColors.color3 = hexToRgb(colors[2]);
+            metaballColors.color4 = hexToRgb(colors[3]);
+            metaballColors.color5 = hexToRgb(colors[4]);
+            
+            console.log(`Applied ${presetName} preset`);
+        }
+        
+        // Add preset button event listeners
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                applyColorPreset(preset);
+            });
+        });
+        
+        // Start random color animation loop
+        setInterval(animateRandomColors, 16); // ~60fps
+        
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
@@ -1247,41 +1731,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                     ctx.fillText(`${Math.round(genrePercentages[genreIndex])}%`, x + 35, labelY + 28);
                 }
             }
-            
-            // Draw dot grid with magnetic field effect
-            const gridSize = 50;
-            const dotSize = 2;
-            const magneticStrength = 60; // How far dots can be pulled
-            const magneticRadius = 200; // Radius of influence
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-
-            for (let gx = 0; gx <= canvas.width; gx += gridSize) {
-                for (let gy = 0; gy <= canvas.height; gy += gridSize) {
-                    let offsetX = 0;
-                    let offsetY = 0;
-                    
-                    // Calculate displacement from all players
-                    for (const id in players) {
-                        const player = players[id];
-                        const dx = player.position.x - gx;
-                        const dy = player.position.y - gy;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (dist < magneticRadius && dist > 0) {
-                            // Attraction force (inverse square law with smoothing)
-                            const force = (1 - dist / magneticRadius) * magneticStrength;
-                            offsetX += (dx / dist) * force;
-                            offsetY += (dy / dist) * force;
-                        }
-                    }
-                    
-                    // Draw dot at displaced position
-                    ctx.beginPath();
-                    ctx.arc(gx + offsetX, gy + offsetY, dotSize, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
         }
 
         // Calculate distance between two points
@@ -1322,7 +1771,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
 
         // Settings
         let circleRadius = 60;
-        let numRings = 5;
+        let numRings = 1;
         let ringWidth = 4;
         let pulseEnabled = true;
         let linesEnabled = false;
@@ -1359,23 +1808,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             circleScaleValue.textContent = circleRadius;
         });
 
-        // Number of rings control
-        const numRingsInput = document.getElementById('num-rings');
-        const numRingsValue = document.getElementById('num-rings-value');
-        
-        numRingsInput.addEventListener('input', (e) => {
-            numRings = parseInt(e.target.value);
-            numRingsValue.textContent = numRings;
-        });
-
-        // Ring width control
-        const ringWidthInput = document.getElementById('ring-width');
-        const ringWidthValue = document.getElementById('ring-width-value');
-        
-        ringWidthInput.addEventListener('input', (e) => {
-            ringWidth = parseInt(e.target.value);
-            ringWidthValue.textContent = ringWidth;
-        });
+        // Ring controls removed - using default values (numRings = 5, ringWidth = 4)
 
         // Pulse toggle
         const pulseToggle = document.getElementById('pulse-toggle');
@@ -1427,24 +1860,24 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             namesToggle.querySelector('.status').textContent = namesEnabled ? 'ON' : 'OFF';
         });
 
-        // Metaball toggle
-        const metaballToggle = document.getElementById('metaball-toggle');
-        let metaballEnabled = false;
-        metaballToggle.addEventListener('click', () => {
-            metaballEnabled = !metaballEnabled;
-            metaballToggle.classList.toggle('active');
-            metaballToggle.querySelector('.status').textContent = metaballEnabled ? 'ON' : 'OFF';
+
+        // WebGL controls
+        let webglEnabled = true;
+
+        // WebGL toggle
+        const webglToggle = document.getElementById('webgl-toggle');
+        webglToggle.addEventListener('click', () => {
+            webglEnabled = !webglEnabled;
+            webglToggle.classList.toggle('active');
+            webglToggle.querySelector('.status').textContent = webglEnabled ? 'ON' : 'OFF';
+            
+            // Hide/show WebGL canvas
+            webglCanvas.style.display = webglEnabled ? 'block' : 'none';
         });
 
-        // Metaball resolution control
-        const metaballResolutionInput = document.getElementById('metaball-resolution');
-        const metaballResolutionValue = document.getElementById('metaball-resolution-value');
-        
-        metaballResolutionInput.addEventListener('input', (e) => {
-            metaballScale = parseFloat(e.target.value);
-            metaballResolutionValue.textContent = metaballScale.toFixed(2);
-            resizeMetaballCanvas();
-        });
+        // Color picker controls
+        const primaryColorInput = document.getElementById('primary-color');
+        const secondaryColorInput = document.getElementById('secondary-color');
 
         // Audio visualization controls
         let playerRingsEnabled = false;
@@ -1601,9 +2034,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         // Start hamburger ring animation
         drawHamburgerRings();
 
-        // Drag and drop functionality
-        let draggedPlayer = null;
-        let dragOffset = { x: 0, y: 0 };
+        // Drag and drop functionality (variables declared at top with other state)
 
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -1684,9 +2115,11 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         });
 
         function draw() {
-            // Clear canvas with black background
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Render WebGL metaballs first (background layer)
+            renderMetaballs();
+            
+            // Clear 2D canvas with transparent background for overlay
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw grid background
             drawGrid();
@@ -1729,105 +2162,8 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             pulseTime += 0.05;
             frameCount++;
 
-            // Only update metaballs every other frame for performance (if fill is enabled and metaball enabled)
-            if (fillEnabled && metaballEnabled && frameCount % 2 === 0) {
-                // Clear and draw metaballs on off-screen canvas
-                metaballCtx.clearRect(0, 0, metaballCanvas.width, metaballCanvas.height);
-                
-                // Draw blurred shapes at lower resolution
-                metaballCtx.filter = 'blur(8px)';
-                for (const id in players) {
-                    const player = players[id];
-                    const pulseData = getPlayerPulseOffset(id);
-                    const pulseAmount = pulseEnabled ? Math.sin((pulseTime * pulseData.speed) + pulseData.offset) * pulseData.amplitude : 0;
-                    const pulsedSize = (circleRadius + pulseAmount) * metaballScale;
-                    const shape = player.shape || 'circle';
-                    
-                    const scaledX = player.position.x * metaballScale;
-                    const scaledY = player.position.y * metaballScale;
-                    
-                    // Draw shape with gradient
-                    metaballCtx.fillStyle = 'rgba(255, 255, 255, 1)';
-                    
-                    if (shape === 'circle') {
-                        const gradient = metaballCtx.createRadialGradient(
-                            scaledX, scaledY, 0,
-                            scaledX, scaledY, pulsedSize
-                        );
-                        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
-                        
-                        metaballCtx.beginPath();
-                        metaballCtx.arc(scaledX, scaledY, pulsedSize, 0, Math.PI * 2);
-                        metaballCtx.fillStyle = gradient;
-                        metaballCtx.fill();
-                    } else if (shape === 'square') {
-                        metaballCtx.fillRect(
-                            scaledX - pulsedSize,
-                            scaledY - pulsedSize,
-                            pulsedSize * 2,
-                            pulsedSize * 2
-                        );
-                    } else if (shape === 'triangle') {
-                        metaballCtx.beginPath();
-                        metaballCtx.moveTo(scaledX, scaledY - pulsedSize);
-                        metaballCtx.lineTo(scaledX + pulsedSize, scaledY + pulsedSize);
-                        metaballCtx.lineTo(scaledX - pulsedSize, scaledY + pulsedSize);
-                        metaballCtx.closePath();
-                        metaballCtx.fill();
-                    }
-                }
-                
-                // Apply threshold to create sharp metaball edges
-                const imageData = metaballCtx.getImageData(0, 0, metaballCanvas.width, metaballCanvas.height);
-                const data = imageData.data;
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    const alpha = data[i + 3];
-                    // Threshold: if alpha > 150, make it fully opaque white, else transparent
-                    if (alpha > 150) {
-                        data[i] = 255;     // R
-                        data[i + 1] = 255; // G
-                        data[i + 2] = 255; // B
-                        data[i + 3] = 255; // A
-                    } else {
-                        data[i + 3] = 0;
-                    }
-                }
-                
-                metaballCtx.filter = 'none';
-                metaballCtx.clearRect(0, 0, metaballCanvas.width, metaballCanvas.height);
-                metaballCtx.putImageData(imageData, 0, 0);
-            }
-            
-            // Draw metaballs with outline if enabled (only if metaball is enabled)
-            if (metaballEnabled && (fillEnabled || outlineEnabled)) {
-                if (outlineEnabled) {
-                    // Draw outline by drawing metaball with shadow/stroke effect
-                    ctx.save();
-                    
-                    // Draw outline using shadow
-                    ctx.shadowColor = '#ffffff';
-                    ctx.shadowBlur = 0;
-                    
-                    // Draw multiple offset copies to create outline
-                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
-                        ctx.shadowOffsetX = Math.cos(angle) * 3;
-                        ctx.shadowOffsetY = Math.sin(angle) * 3;
-                        ctx.drawImage(metaballCanvas, 0, 0, canvas.width, canvas.height);
-                    }
-                    
-                    ctx.restore();
-                }
-                
-                // Draw fill on top if enabled
-                if (fillEnabled) {
-                    ctx.drawImage(metaballCanvas, 0, 0, canvas.width, canvas.height);
-                }
-            }
-            
-            // If metaball is off, draw simple shapes
-            if (!metaballEnabled && fillEnabled) {
+            // Draw simple shapes
+            if (fillEnabled) {
                 for (const id in players) {
                     const player = players[id];
                     const pulseData = getPlayerPulseOffset(id);
