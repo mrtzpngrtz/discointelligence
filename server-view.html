@@ -953,6 +953,17 @@
                 document.getElementById('prompt-text-repeat').textContent = window.currentPromptText;
                 document.getElementById('prompt-text-repeat2').textContent = window.currentPromptText;
                 
+                // Trigger color transition if random mode is active
+                if (randomModeActive) {
+                    console.log('🎨 Prompt changed - triggering random color transition');
+                    generateNewRandomTargets();
+                    // Increase transition speed temporarily for more dramatic effect
+                    randomColorTransitionSpeed = 0.015;
+                    setTimeout(() => {
+                        randomColorTransitionSpeed = 0.002; // Reset to slow transition
+                    }, 3000);
+                }
+                
                 // Broadcast prompt to stats dashboard
                 if (socket && socket.connected) {
                     socket.emit('promptUpdate', window.currentPromptText);
