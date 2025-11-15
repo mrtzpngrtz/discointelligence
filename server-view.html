@@ -90,6 +90,20 @@
             cursor: not-allowed;
         }
 
+        #connect-btn {
+            min-width: 80px;
+            padding: 0 12px;
+        }
+
+        #connect-btn.connected {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #refresh-prompt-btn {
+            font-size: 16px;
+            min-width: 32px;
+        }
+
         #volume-control {
             display: flex;
             align-items: center;
@@ -440,6 +454,8 @@
         </div>
         <div class="right">
             <div id="playback-controls">
+                <button id="connect-btn" title="Connect to Lyria">Connect</button>
+                <button id="refresh-prompt-btn" disabled title="Refresh Prompt">🔄</button>
                 <button id="play-btn" disabled title="Play">▶</button>
                 <button id="stop-btn" disabled title="Stop">■</button>
                 <div id="volume-control">
@@ -763,6 +779,8 @@
         window.currentPromptText = 'Waiting for music generation...';
 
         // Playback controls
+        const connectBtn = document.getElementById('connect-btn');
+        const refreshPromptBtn = document.getElementById('refresh-prompt-btn');
         const playBtn = document.getElementById('play-btn');
         const stopBtn = document.getElementById('stop-btn');
         const volumeSlider = document.getElementById('volume-slider');
@@ -804,6 +822,52 @@
                     console.error('Failed to stop:', error);
                 }
             }
+        });
+
+        // Connect button
+        connectBtn.addEventListener('click', () => {
+            if (!window.lyriaSession) {
+                // Show modal
+                document.getElementById('api-key-modal').classList.remove('hidden');
+            } else {
+                // Disconnect
+                if (window.lyriaSession) {
+                    window.lyriaSession.close();
+                    window.lyriaSession = null;
+                }
+                connectBtn.textContent = 'Connect';
+                connectBtn.classList.remove('connected');
+                playBtn.disabled = true;
+                stopBtn.disabled = true;
+                refreshPromptBtn.disabled = true;
+                document.getElementById('music-status').textContent = '🎵 Music: Not Connected';
+                console.log('Disconnected from Lyria');
+            }
+        });
+
+        // Refresh prompt button - force regeneration
+        refreshPromptBtn.addEventListener('click', async () => {
+            if (!window.lyriaSession) {
+                alert('Please connect to Lyria first');
+                return;
+            }
+
+            console.log('🔄 Forcing prompt refresh...');
+            
+            // Clear last weights to force regeneration
+            window.lastGenreWeights = null;
+            
+            // Immediately update music with current percentages
+            if (genrePercentages) {
+                await window.updateMusicFromGenres(genrePercentages);
+            }
+            
+            // Visual feedback
+            const originalText = refreshPromptBtn.innerHTML;
+            refreshPromptBtn.innerHTML = '✓';
+            setTimeout(() => {
+                refreshPromptBtn.innerHTML = originalText;
+            }, 1000);
         });
 
         // Connect to Lyria
@@ -898,6 +962,11 @@
                 // Enable playback controls
                 playBtn.disabled = false;
                 stopBtn.disabled = false;
+                refreshPromptBtn.disabled = false;
+                
+                // Update connect button
+                connectBtn.textContent = 'Disconnect';
+                connectBtn.classList.add('connected');
                 
             } catch (error) {
                 console.error('Failed to connect to Lyria:', error);
