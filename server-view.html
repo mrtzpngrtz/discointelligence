@@ -299,16 +299,6 @@
             z-index: 2;
         }
 
-        #hamburger-rings {
-            position: fixed;
-            top: 60px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            pointer-events: none;
-            z-index: 100;
-        }
-
         #menu {
             position: fixed;
             top: 0;
@@ -475,7 +465,6 @@
         </div>
     </div>
 
-    <div id="hamburger-rings"></div>
     <div id="hamburger">
         <span></span>
         <span></span>
@@ -499,13 +488,6 @@
         </div>
 
         <div class="control-group">
-            <div class="toggle-button active" id="lines-toggle">
-                <span>CONNECTION LINES</span>
-                <div class="status">ON</div>
-            </div>
-        </div>
-
-        <div class="control-group">
             <div class="toggle-button active" id="fill-toggle">
                 <span>CIRCLE FILL</span>
                 <div class="status">ON</div>
@@ -515,13 +497,6 @@
         <div class="control-group">
             <div class="toggle-button" id="solid-fill-toggle">
                 <span>SOLID FILL (NO RINGS)</span>
-                <div class="status">OFF</div>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <div class="toggle-button" id="outline-toggle">
-                <span>CIRCLE OUTLINE</span>
                 <div class="status">OFF</div>
             </div>
         </div>
@@ -589,13 +564,6 @@
         <div class="control-group">
             <div class="toggle-button active" id="player-rings-toggle">
                 <span>PLAYER RINGS</span>
-                <div class="status">ON</div>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <div class="toggle-button active" id="hamburger-rings-toggle">
-                <span>HAMBURGER RINGS</span>
                 <div class="status">ON</div>
             </div>
         </div>
@@ -1392,6 +1360,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         fetch('/config.json')
             .then(response => response.json())
             .then(config => {
+                // Load color presets
                 if (config.colorPresets) {
                     colorPresets = config.colorPresets;
                     console.log('Loaded color presets from config:', colorPresets);
@@ -1401,6 +1370,98 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                     // Apply default preset
                     applyColorPreset(defaultColorPreset);
                     console.log('Applied default color preset:', defaultColorPreset);
+                }
+                
+                // Load visual settings
+                if (config.visualSettings) {
+                    const vs = config.visualSettings;
+                    
+                    if (vs.circleScale !== undefined) {
+                        circleRadius = vs.circleScale;
+                        circleScaleInput.value = vs.circleScale;
+                        circleScaleValue.textContent = vs.circleScale;
+                    }
+                    
+                    if (vs.pulseEnabled !== undefined) {
+                        pulseEnabled = vs.pulseEnabled;
+                        pulseToggle.classList.toggle('active', pulseEnabled);
+                        pulseToggle.querySelector('.status').textContent = pulseEnabled ? 'ON' : 'OFF';
+                    }
+                    
+                    if (vs.fillEnabled !== undefined) {
+                        fillEnabled = vs.fillEnabled;
+                        fillToggle.classList.toggle('active', fillEnabled);
+                        fillToggle.querySelector('.status').textContent = fillEnabled ? 'ON' : 'OFF';
+                    }
+                    
+                    if (vs.solidFillEnabled !== undefined) {
+                        solidFillEnabled = vs.solidFillEnabled;
+                        solidFillToggle.classList.toggle('active', solidFillEnabled);
+                        solidFillToggle.querySelector('.status').textContent = solidFillEnabled ? 'ON' : 'OFF';
+                    }
+                    
+                    if (vs.namesEnabled !== undefined) {
+                        namesEnabled = vs.namesEnabled;
+                        namesToggle.classList.toggle('active', namesEnabled);
+                        namesToggle.querySelector('.status').textContent = namesEnabled ? 'ON' : 'OFF';
+                    }
+                    
+                    if (vs.webglEnabled !== undefined) {
+                        webglEnabled = vs.webglEnabled;
+                        webglToggle.classList.toggle('active', webglEnabled);
+                        webglToggle.querySelector('.status').textContent = webglEnabled ? 'ON' : 'OFF';
+                        webglCanvas.style.display = webglEnabled ? 'block' : 'none';
+                    }
+                    
+                    if (vs.playerRingsEnabled !== undefined) {
+                        playerRingsEnabled = vs.playerRingsEnabled;
+                        playerRingsToggle.classList.toggle('active', playerRingsEnabled);
+                        playerRingsToggle.querySelector('.status').textContent = playerRingsEnabled ? 'ON' : 'OFF';
+                    }
+                    
+                    console.log('Loaded visual settings from config');
+                }
+                
+                // Load Lyria settings
+                if (config.lyriaSettings) {
+                    const ls = config.lyriaSettings;
+                    
+                    if (ls.adaptiveMusicEnabled !== undefined) {
+                        adaptiveMusicEnabled = ls.adaptiveMusicEnabled;
+                        adaptiveMusicToggle.classList.toggle('active', adaptiveMusicEnabled);
+                        adaptiveMusicToggle.querySelector('.status').textContent = adaptiveMusicEnabled ? 'ON' : 'OFF';
+                    }
+                    
+                    if (ls.bpm !== undefined) {
+                        lyriaBpmInput.value = ls.bpm;
+                        lyriaBpmValue.textContent = ls.bpm;
+                    }
+                    
+                    if (ls.temperature !== undefined) {
+                        lyriaTemperatureInput.value = ls.temperature;
+                        lyriaTemperatureValue.textContent = ls.temperature.toFixed(1);
+                    }
+                    
+                    if (ls.guidance !== undefined) {
+                        lyriaGuidanceInput.value = ls.guidance;
+                        lyriaGuidanceValue.textContent = ls.guidance.toFixed(1);
+                    }
+                    
+                    if (ls.density !== undefined) {
+                        lyriaDensityInput.value = ls.density;
+                        lyriaDensityValue.textContent = ls.density.toFixed(2);
+                    }
+                    
+                    if (ls.brightness !== undefined) {
+                        lyriaBrightnessInput.value = ls.brightness;
+                        lyriaBrightnessValue.textContent = ls.brightness.toFixed(2);
+                    }
+                    
+                    if (ls.scale !== undefined) {
+                        document.getElementById('lyria-scale').value = ls.scale;
+                    }
+                    
+                    console.log('Loaded Lyria settings from config');
                 }
             })
             .catch(error => {
@@ -1780,14 +1841,16 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         resizeMetaballCanvas();
         window.addEventListener('resize', resizeMetaballCanvas);
 
-        // Settings
+        // Settings (defaults - will be loaded from config.json)
         let circleRadius = 60;
         let numRings = 1;
         let ringWidth = 4;
         let pulseEnabled = true;
-        let linesEnabled = false;
         let fillEnabled = true;
-        let outlineEnabled = false;
+        let solidFillEnabled = false;
+        let namesEnabled = true;
+        let webglEnabled = true;
+        let playerRingsEnabled = false;
 
         // Hamburger menu toggle
         const hamburger = document.getElementById('hamburger');
@@ -1829,14 +1892,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             pulseToggle.querySelector('.status').textContent = pulseEnabled ? 'ON' : 'OFF';
         });
 
-        // Lines toggle
-        const linesToggle = document.getElementById('lines-toggle');
-        linesToggle.addEventListener('click', () => {
-            linesEnabled = !linesEnabled;
-            linesToggle.classList.toggle('active');
-            linesToggle.querySelector('.status').textContent = linesEnabled ? 'ON' : 'OFF';
-        });
-
         // Fill toggle
         const fillToggle = document.getElementById('fill-toggle');
         fillToggle.addEventListener('click', () => {
@@ -1846,7 +1901,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         });
 
         // Solid fill toggle
-        let solidFillEnabled = false;
         const solidFillToggle = document.getElementById('solid-fill-toggle');
         solidFillToggle.addEventListener('click', () => {
             solidFillEnabled = !solidFillEnabled;
@@ -1854,16 +1908,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             solidFillToggle.querySelector('.status').textContent = solidFillEnabled ? 'ON' : 'OFF';
         });
 
-        // Outline toggle
-        const outlineToggle = document.getElementById('outline-toggle');
-        outlineToggle.addEventListener('click', () => {
-            outlineEnabled = !outlineEnabled;
-            outlineToggle.classList.toggle('active');
-            outlineToggle.querySelector('.status').textContent = outlineEnabled ? 'ON' : 'OFF';
-        });
-
         // Names toggle
-        let namesEnabled = true;
         const namesToggle = document.getElementById('names-toggle');
         namesToggle.addEventListener('click', () => {
             namesEnabled = !namesEnabled;
@@ -1871,9 +1916,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             namesToggle.querySelector('.status').textContent = namesEnabled ? 'ON' : 'OFF';
         });
 
-
-        // WebGL controls
-        let webglEnabled = true;
 
         // WebGL toggle
         const webglToggle = document.getElementById('webgl-toggle');
@@ -1889,9 +1931,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         // Color picker controls
         const primaryColorInput = document.getElementById('primary-color');
         const secondaryColorInput = document.getElementById('secondary-color');
-
-        // Audio visualization controls
-        let playerRingsEnabled = false;
 
         // Player rings toggle
         const playerRingsToggle = document.getElementById('player-rings-toggle');
@@ -1992,59 +2031,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             }
         }, 3000); // Update every 3 seconds
 
-        // Hamburger audio visualization
-        const hamburgerRings = document.getElementById('hamburger-rings');
-        let hamburgerPulseTime = 0;
-        let hamburgerRingsEnabled = true;
-
-        // Hamburger rings toggle
-        const hamburgerRingsToggle = document.getElementById('hamburger-rings-toggle');
-        hamburgerRingsToggle.addEventListener('click', () => {
-            hamburgerRingsEnabled = !hamburgerRingsEnabled;
-            hamburgerRingsToggle.classList.toggle('active');
-            hamburgerRingsToggle.querySelector('.status').textContent = hamburgerRingsEnabled ? 'ON' : 'OFF';
-            
-            // Clear rings immediately if disabled
-            if (!hamburgerRingsEnabled) {
-                hamburgerRings.innerHTML = '';
-            }
-        });
-
-        function drawHamburgerRings() {
-            if (!window.lyriaSession || !hamburgerRingsEnabled) {
-                hamburgerRings.innerHTML = '';
-                return;
-            }
-
-            hamburgerPulseTime += 0.05;
-            
-            // Create 3 pulsing rings
-            let svgContent = '<svg width="200" height="200" viewBox="0 0 200 200" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">';
-            
-            const numRings = 3;
-            const centerX = 100;
-            const centerY = 100;
-            const baseRadius = 20;
-            
-            for (let i = 0; i < numRings; i++) {
-                const ringPhase = (hamburgerPulseTime * 0.9) + (i * Math.PI * 0.66);
-                const ringPulse = (Math.sin(ringPhase) + 1) / 2; // 0 to 1
-                const ringRadius = baseRadius + 10 + (i * 15) + (ringPulse * 10);
-                const ringAlpha = (1 - ringPulse) * 0.4;
-                
-                svgContent += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" 
-                    fill="none" stroke="rgba(255,255,255,${ringAlpha})" stroke-width="2"/>`;
-            }
-            
-            svgContent += '</svg>';
-            hamburgerRings.innerHTML = svgContent;
-            
-            requestAnimationFrame(drawHamburgerRings);
-        }
-
-        // Start hamburger ring animation
-        drawHamburgerRings();
-
         // Drag and drop functionality (variables declared at top with other state)
 
         canvas.addEventListener('mousedown', (e) => {
@@ -2135,40 +2121,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             // Draw grid background
             drawGrid();
 
-            // Collect all positions
-            const allPositions = [];
-            for (const id in players) {
-                allPositions.push({ 
-                    id: id, 
-                    pos: players[id].position,
-                    player: players[id]
-                });
-            }
-            
-            // Draw connection lines (if enabled)
-            if (linesEnabled) {
-                for (let i = 0; i < allPositions.length; i++) {
-                    for (let j = i + 1; j < allPositions.length; j++) {
-                        const pos1 = allPositions[i].pos;
-                        const pos2 = allPositions[j].pos;
-                        const dist = distance(pos1.x, pos1.y, pos2.x, pos2.y);
-                        
-                        // Connect lines at longer distance
-                        const maxDistance = 1200;
-                        
-                        if (dist < maxDistance) {
-                            // Full white 2px lines
-                            ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 2;
-                            ctx.beginPath();
-                            ctx.moveTo(pos1.x, pos1.y);
-                            ctx.lineTo(pos2.x, pos2.y);
-                            ctx.stroke();
-                        }
-                    }
-                }
-            }
-
             // Update pulse animation
             pulseTime += 0.05;
             frameCount++;
@@ -2214,17 +2166,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                             pulsedSize * 2,
                             pulsedSize * 2
                         );
-                        
-                        if (outlineEnabled) {
-                            ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 3;
-                            ctx.strokeRect(
-                                player.position.x - pulsedSize,
-                                player.position.y - pulsedSize,
-                                pulsedSize * 2,
-                                pulsedSize * 2
-                            );
-                        }
                     } else if (shape === 'triangle') {
                         ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
@@ -2233,12 +2174,6 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                         ctx.lineTo(player.position.x - pulsedSize, player.position.y + pulsedSize);
                         ctx.closePath();
                         ctx.fill();
-                        
-                        if (outlineEnabled) {
-                            ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 3;
-                            ctx.stroke();
-                        }
                     }
                 }
             }
