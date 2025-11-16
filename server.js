@@ -45,12 +45,25 @@ function loadGenres() {
     return ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
 }
 
-// Save genres to config file
+// Save genres to config file (preserving other settings)
 function saveGenres(genresToSave) {
     try {
-        const config = { genres: genresToSave };
+        // Load existing config to preserve other settings
+        let config = {};
+        if (fs.existsSync(CONFIG_FILE)) {
+            try {
+                config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+            } catch (parseError) {
+                console.warn('Could not parse existing config, creating new:', parseError);
+            }
+        }
+        
+        // Update only the genres property
+        config.genres = genresToSave;
+        
+        // Save back to file
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
-        console.log('Genres saved to config.json');
+        console.log('Genres saved to config.json (other settings preserved)');
     } catch (error) {
         console.error('Error saving config.json:', error);
     }

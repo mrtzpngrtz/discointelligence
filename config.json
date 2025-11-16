@@ -1,6 +1,6 @@
 {
   "genres": [
-    "DAFT PUNK CHILLING ON A SPACESHIP",
+    "ASAS",
     "ERRORS IN A QUANTUM COMPUTER",
     "SUMMER JAZZ WITH GIN",
     "GERMAN HIP HOP 1990",
@@ -8,15 +8,61 @@
     "THROAT SINGING IN THE BERLIN SUBWAY",
     "LONELY GUITAR ON THE MOON",
     "SLOW DANCE WITH A MOOG SYNTH"
-  ]
-],
+  ],
   "colorPresets": {
-    "standard": ["#202020", "#454545", "#777777", "#ffffff", "#000000"],
-    "neon": ["#ff00ff", "#00ffff", "#ff6600", "#00ff00", "#ffffff"],
-    "fire": ["#000000", "#ff0000", "#ff6600", "#ffff00", "#ffffff"],
-    "ocean": ["#000033", "#0066ff", "#00ffff", "#66ffff", "#ffffff"],
-    "purple": ["#000000", "#4b0082", "#9400d3", "#ff00ff", "#ffffff"]
+    "standard": [
+      "#000000",
+      "#808080",
+      "#ffffff",
+      "#808080",
+      "#000000"
+    ],
+    "neon": [
+      "#ff00ff",
+      "#00ffff",
+      "#ff6600",
+      "#00ff00",
+      "#ffffff"
+    ],
+    "fire": [
+      "#000000",
+      "#ff0000",
+      "#ff6600",
+      "#ffff00",
+      "#ffffff"
+    ],
+    "ocean": [
+      "#000033",
+      "#0066ff",
+      "#00ffff",
+      "#66ffff",
+      "#ffffff"
+    ],
+    "purple": [
+      "#000000",
+      "#4b0082",
+      "#9400d3",
+      "#ff00ff",
+      "#ffffff"
+    ]
   },
-  "defaultColorPreset": "standard"
+  "defaultColorPreset": "standard",
+  "visualSettings": {
+    "circleScale": 100,
+    "pulseEnabled": true,
+    "fillEnabled": false,
+    "solidFillEnabled": false,
+    "namesEnabled": true,
+    "webglEnabled": true,
+    "playerRingsEnabled": false
+  },
+  "lyriaSettings": {
+    "adaptiveMusicEnabled": true,
+    "bpm": 120,
+    "temperature": 1.1,
+    "guidance": 4,
+    "density": 0.5,
+    "brightness": 0.5,
+    "scale": "SCALE_UNSPECIFIED"
+  }
 }
- 
