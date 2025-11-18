@@ -170,6 +170,14 @@ function updatePhysics() {
         player.velocity.x *= FRICTION;
         player.velocity.y *= FRICTION;
         
+        // Bot AI - Static (no wandering)
+        if (player.isBot) {
+            // Keep bots relatively stationary, just let them be pushed by collisions
+            // Apply stronger friction to make them settle quickly if pushed
+            player.velocity.x *= 0.9;
+            player.velocity.y *= 0.9;
+        }
+        
         // Clamp velocity
         const speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.y * player.velocity.y);
         if (speed > MAX_VELOCITY) {
@@ -340,6 +348,59 @@ io.on('connection', (socket) => {
             console.log(`Updated position for player ${data.playerId}`);
             
             // Broadcast updated positions to all clients
+            io.emit('players', players);
+        }
+    });
+
+    // Handle adding a bot
+    socket.on('addBot', () => {
+        if (isViewer) {
+            const botId = `bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            playerCounter++;
+            
+            players[botId] = {
+                id: botId,
+                playerNumber: playerCounter,
+                name: `Bubble ${playerCounter}`,
+                shape: 'circle',
+                isBot: true,
+                position: {
+                    x: Math.random() * (BOUNDS.width - 200) + 100,
+                    y: Math.random() * (BOUNDS.height - 200) + 100
+                },
+                velocity: { x: 0, y: 0 },
+                color: getRandomColor()
+            };
+            
+            console.log(`Bot added: ${botId}`);
+            io.emit('players', players);
+        }
+    });
+
+    // Handle removing a bot
+    socket.on('removeBot', () => {
+        if (isViewer) {
+            // Find a bot to remove (last one added)
+            const botIds = Object.keys(players).filter(id => players[id].isBot);
+            if (botIds.length > 0) {
+                const botToRemove = botIds[botIds.length - 1];
+                delete players[botToRemove];
+                console.log(`Bot removed: ${botToRemove}`);
+                io.emit('playerDisconnected', botToRemove);
+                io.emit('players', players); // Ensure list is synced
+            }
+        }
+    });
+
+    // Handle clearing all bots
+    socket.on('clearBots', () => {
+        if (isViewer) {
+            const botIds = Object.keys(players).filter(id => players[id].isBot);
+            botIds.forEach(id => {
+                delete players[id];
+                io.emit('playerDisconnected', id);
+            });
+            console.log(`Cleared ${botIds.length} bots`);
             io.emit('players', players);
         }
     });

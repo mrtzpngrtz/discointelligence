@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>schwarm D.I. – DISCO INTELLIGENCE. | Server View</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap');
 
@@ -26,6 +27,7 @@
             width: 100vw;
             height: 100vh;
             z-index: 1;
+            transition: margin-left 0.3s, width 0.3s;
         }
 
         #canvas {
@@ -36,6 +38,126 @@
             height: 100vh;
             z-index: 2;
             pointer-events: auto;
+            transition: margin-left 0.3s, width 0.3s;
+        }
+
+        /* Stats Sidebar Styles */
+        #stats-sidebar {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            bottom: 0;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 99;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        body.stats-open #stats-sidebar {
+            transform: translateX(0);
+        }
+
+        body.stats-open #webgl-canvas,
+        body.stats-open #canvas {
+            margin-left: 300px;
+            width: calc(100vw - 300px);
+        }
+
+        #stats-toggle-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        
+        #stats-toggle-btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        /* Stats Content Styles */
+        .chart-container {
+            margin-bottom: 25px;
+        }
+
+        .chart-title {
+            font-size: 11px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 150px;
+            width: 100%;
+        }
+
+        .genre-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .genre-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .genre-name {
+            width: 80px;
+            font-size: 9px;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #ffffff;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-right: 5px;
+            justify-content: flex-end;
+        }
+
+        .bar-percentage {
+            font-size: 8px;
+            font-weight: 700;
+            color: #000000;
+            min-width: 20px;
+            text-align: right;
+        }
+
+        .bar-percentage.outside {
+            color: #ffffff;
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         #ui-bar {
@@ -57,7 +179,7 @@
         #ui-bar .left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px; /* Reduced gap to fit button */
         }
 
         #playback-controls {
@@ -68,13 +190,13 @@
 
         #playback-controls button {
             background: transparent;
-            border: 1px solid #ffffff;
+            border: none;
             color: #ffffff;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 3px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -92,15 +214,15 @@
             cursor: not-allowed;
         }
 
-        #connect-btn {
+        #playback-controls #connect-btn {
             width: auto;
             min-width: auto;
-            padding: 8px 12px;
+            padding: 4px 8px;
             background: transparent;
             color: #ffffff;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: normal;
-            border: 1px solid #ffffff;
+            border: none;
         }
 
         #connect-btn:hover:not(:disabled) {
@@ -119,10 +241,14 @@
 
         #refresh-prompt-btn {
             font-size: 16px;
-            min-width: 32px;
+            min-width: 28px;
             background: transparent;
             color: #ffffff;
-            border: 1px solid #ffffff;
+            border: none;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #refresh-prompt-btn:hover:not(:disabled) {
@@ -479,6 +605,7 @@
 
     <div id="ui-bar">
         <div class="left">
+            <button id="stats-toggle-btn" title="Toggle Stats">📊</button>
             <div class="title">schwarm D.I. – DISCO INTELLIGENCE.</div>
             <div class="info">PLAYERS: <span id="player-count">0</span></div>
             <div id="music-status">🎵 Music: Not Connected</div>
@@ -486,7 +613,12 @@
         <div class="right">
             <div id="playback-controls">
                 <button id="connect-btn" title="Connect to Lyria">Connect</button>
-                <button id="refresh-prompt-btn" disabled title="Refresh Prompt">🔄</button>
+                <button id="refresh-prompt-btn" disabled title="Refresh Prompt">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                </button>
                 <button id="play-btn" disabled title="Play">▶</button>
                 <button id="stop-btn" disabled title="Stop">■</button>
                 <div id="volume-control">
@@ -496,6 +628,30 @@
                 </div>
             </div>
             <div id="connection-status" class="status disconnected">CONNECTING</div>
+        </div>
+    </div>
+
+    <div id="stats-sidebar">
+        <div class="chart-container">
+            <div class="chart-title">GENRE DISTRIBUTION (LIVE)</div>
+            <div class="genre-bars">
+                <!-- Bars generated by JS or static for now -->
+                <div class="genre-bar"><div class="genre-name" id="stat-name-0">Genre 1</div><div class="bar-container"><div class="bar-fill" id="stat-bar-0" style="width: 0%"><span class="bar-percentage" id="stat-pct-0">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-1">Genre 2</div><div class="bar-container"><div class="bar-fill" id="stat-bar-1" style="width: 0%"><span class="bar-percentage" id="stat-pct-1">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-2">Genre 3</div><div class="bar-container"><div class="bar-fill" id="stat-bar-2" style="width: 0%"><span class="bar-percentage" id="stat-pct-2">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-3">Genre 4</div><div class="bar-container"><div class="bar-fill" id="stat-bar-3" style="width: 0%"><span class="bar-percentage" id="stat-pct-3">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-4">Genre 5</div><div class="bar-container"><div class="bar-fill" id="stat-bar-4" style="width: 0%"><span class="bar-percentage" id="stat-pct-4">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-5">Genre 6</div><div class="bar-container"><div class="bar-fill" id="stat-bar-5" style="width: 0%"><span class="bar-percentage" id="stat-pct-5">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-6">Genre 7</div><div class="bar-container"><div class="bar-fill" id="stat-bar-6" style="width: 0%"><span class="bar-percentage" id="stat-pct-6">0%</span></div></div></div>
+                <div class="genre-bar"><div class="genre-name" id="stat-name-7">Genre 8</div><div class="bar-container"><div class="bar-fill" id="stat-bar-7" style="width: 0%"><span class="bar-percentage" id="stat-pct-7">0%</span></div></div></div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">GENRE HISTORY</div>
+            <div class="chart-wrapper">
+                <canvas id="history-chart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -519,6 +675,15 @@
     </div>
 
     <div id="menu">
+        <h3>SINGLE PLAYER</h3>
+        <div class="control-group">
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <button id="add-bot-btn" style="flex: 1; padding: 10px; background: #ffffff; color: #000000; border: none; border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">+ ADD BUBBLE</button>
+                <button id="remove-bot-btn" style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">- REMOVE</button>
+            </div>
+            <button id="clear-bots-btn" style="width: 100%; margin-top: 5px; padding: 10px; background: rgba(255, 0, 0, 0.3); color: #ffffff; border: 1px solid rgba(255,0,0,0.5); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">CLEAR ALL BUBBLES</button>
+        </div>
+
         <h3>SETTINGS</h3>
         
         <div class="control-group">
@@ -695,6 +860,7 @@
         </div>
     </div>
 
+    <!-- Canvas elements pushed via CSS when sidebar is open -->
     <canvas id="webgl-canvas"></canvas>
     <canvas id="canvas"></canvas>
 
@@ -702,6 +868,9 @@
     <script type="module">
         import { GoogleGenAI } from 'https://esm.run/@google/genai';
         import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
+
+        // Music genres - default (will be updated from server)
+        let genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
 
         /**
          * LyriaBrowserPlayer - Handles realtime audio playback
@@ -717,14 +886,39 @@
                 this.nextChunkTime = 0;
                 this.isPlaying = false;
 
+                // Create analyser node for visualization
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
                 // Create gain node for volume control
                 this.gainNode = this.audioContext.createGain();
+                
+                // Connect graph: source -> analyser -> gain -> destination
+                // Sources connect to analyser in _schedulePlayback
+                this.analyser.connect(this.gainNode);
                 this.gainNode.connect(this.audioContext.destination);
+                
                 this.gainNode.gain.value = 1.0; // Default full volume
 
                 if (this.audioContext.state === 'suspended') {
                     console.warn('AudioContext suspended. User interaction required.');
                 }
+            }
+
+            getAudioEnergy() {
+                if (!this.analyser) return 0;
+                this.analyser.getByteFrequencyData(this.dataArray);
+                
+                // Calculate average energy
+                let sum = 0;
+                // Focus on bass/lower mids (first half of bins)
+                const bins = this.dataArray.length / 2;
+                for (let i = 0; i < bins; i++) {
+                    sum += this.dataArray[i];
+                }
+                // Normalize 0-1
+                return (sum / bins) / 255;
             }
 
             playAudioChunk(base64Data) {
@@ -784,7 +978,7 @@
 
                 const source = this.audioContext.createBufferSource();
                 source.buffer = audioBuffer;
-                source.connect(this.gainNode); // Connect through gain node for volume control
+                source.connect(this.analyser); // Connect to analyser first
                 source.start(this.nextChunkTime);
                 this.nextChunkTime += audioBuffer.duration;
 
@@ -1150,13 +1344,116 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         // Socket.IO connection (viewer only, no interaction)
         const socket = io({ query: { viewer: 'true' } });
 
+        // Stats state
+        let statsOpen = false;
+        let currentPercentages = [0, 0, 0, 0, 0, 0, 0, 0];
+        
+        // Toggle stats logic
+        const statsToggleBtn = document.getElementById('stats-toggle-btn');
+        statsToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('stats-open');
+            // Trigger resize to update canvas bounds for physics
+            setTimeout(resizeCanvas, 300); // Wait for transition
+        });
+
+        // Calculate genre stats
+        function updateStats(players) {
+            const genreCounts = [0, 0, 0, 0, 0, 0, 0, 0];
+            let totalPlayers = 0;
+            
+            // Use current (potentially resized) canvas dimensions
+            const cols = 4;
+            const rows = 2;
+            const sectionWidth = canvas.width / cols;
+            const sectionHeight = canvas.height / rows;
+            
+            for (const id in players) {
+                const pos = players[id].position;
+                // Simple genre check
+                const col = Math.floor(pos.x / sectionWidth);
+                const row = Math.floor(pos.y / sectionHeight);
+                
+                if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                    const idx = row * cols + col;
+                    genreCounts[idx]++;
+                    totalPlayers++;
+                }
+            }
+            
+            // Update bars UI
+            for (let i = 0; i < 8; i++) {
+                const percentage = totalPlayers > 0 ? (genreCounts[i] / totalPlayers) * 100 : 0;
+                currentPercentages[i] = percentage;
+                
+                const bar = document.getElementById(`stat-bar-${i}`);
+                const pct = document.getElementById(`stat-pct-${i}`);
+                const label = document.getElementById(`stat-name-${i}`);
+                
+                if (bar && pct && label) {
+                    bar.style.width = `${percentage}%`;
+                    pct.textContent = `${Math.round(percentage)}%`;
+                    label.textContent = genres[i] || `Genre ${i+1}`;
+                    
+                    if (percentage < 15) {
+                        pct.classList.add('outside');
+                    } else {
+                        pct.classList.remove('outside');
+                    }
+                }
+            }
+        }
+        
+        // History Chart Setup
+        const historyCtx = document.getElementById('history-chart').getContext('2d');
+        const maxDataPoints = 180; // 3 minutes
+        const historyData = {
+            labels: Array(maxDataPoints).fill(''),
+            datasets: genres.map((g, i) => ({
+                label: g,
+                data: Array(maxDataPoints).fill(0),
+                borderColor: ['#ffffff', '#dddddd', '#bbbbbb', '#999999', '#777777', '#555555', '#333333', '#111111'][i],
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                pointRadius: 0,
+                tension: 0.4
+            }))
+        };
+        
+        const historyChart = new Chart(historyCtx, {
+            type: 'line',
+            data: historyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                    y: { display: false, max: 100 },
+                    x: { display: false }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+        
+        // Update history loop (1s)
+        setInterval(() => {
+            historyData.datasets.forEach((dataset, i) => {
+                dataset.label = genres[i];
+                dataset.data.shift();
+                dataset.data.push(currentPercentages[i]);
+            });
+            historyChart.update('none');
+        }, 1000);
+
         // Set canvas size
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
+            const sidebarWidth = document.body.classList.contains('stats-open') ? 300 : 0;
+            const availWidth = window.innerWidth - sidebarWidth;
+            
+            canvas.width = availWidth;
             canvas.height = window.innerHeight;
             
             // Resize WebGL canvas
-            webglCanvas.width = window.innerWidth;
+            webglCanvas.width = availWidth;
             webglCanvas.height = window.innerHeight;
             if (gl) {
                 gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
@@ -1204,6 +1501,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             uniform vec3 customColor3;
             uniform vec3 customColor4;
             uniform vec3 customColor5;
+            uniform float u_energy;
             
             float k = 20.0;
             float field = 0.0;
@@ -1283,7 +1581,11 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                     c.x += wobbleX;
                     c.y += wobbleY;
                     
-                    float r = 0.08;  // Size of each metaball
+                    // Pulse size based on audio energy
+                    // Base size 0.08, add energy influence
+                    float pulse = u_energy * 0.06 * (0.8 + sin(iTime * 10.0 + phase) * 0.2);
+                    float r = 0.08 + pulse;
+                    
                     float d = distance(pos, c);
                     field += (k * r) / (d * d);
                 }
@@ -1356,6 +1658,7 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
         const customColor3Location = gl.getUniformLocation(shaderProgram, 'customColor3');
         const customColor4Location = gl.getUniformLocation(shaderProgram, 'customColor4');
         const customColor5Location = gl.getUniformLocation(shaderProgram, 'customColor5');
+        const uEnergyLocation = gl.getUniformLocation(shaderProgram, 'u_energy');
         
         // Helper function to convert hex to RGB
         function hexToRgb(hex) {
@@ -1400,6 +1703,13 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             gl.uniform2f(iResolutionLocation, webglCanvas.width, webglCanvas.height);
             gl.uniform1f(iTimeLocation, time);
             gl.uniform2f(iMouseLocation, mouseX, mouseY);
+
+            // Pass audio energy to shader
+            let energy = 0;
+            if (window.audioPlayer && window.lyriaSession) {
+                energy = window.audioPlayer.getAudioEnergy();
+            }
+            gl.uniform1f(uEnergyLocation, energy);
             
             // Update player positions
             const playerArray = Object.values(players);
@@ -1727,6 +2037,8 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             }
             players = filteredPlayers;
             playerCountElement.textContent = Object.keys(players).length;
+            // Update stats
+            if (typeof updateStats === 'function') updateStats(players);
         });
 
         socket.on('physicsUpdate', (serverPlayers) => {
@@ -1745,15 +2057,14 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             }
             players = filteredPlayers;
             playerCountElement.textContent = Object.keys(players).length;
+            // Update stats
+            if (typeof updateStats === 'function') updateStats(players);
         });
 
         socket.on('playerDisconnected', (id) => {
             delete players[id];
             playerCountElement.textContent = Object.keys(players).length;
         });
-
-        // Music genres - will be updated from server
-        let genres = ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
 
         // Listen for genre updates from server
         socket.on('genresUpdate', (newGenres) => {
@@ -2086,6 +2397,31 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
             lyriaBrightnessValue.textContent = parseFloat(e.target.value).toFixed(2);
         });
 
+        // Single player controls
+        document.getElementById('add-bot-btn').addEventListener('click', () => {
+            console.log('Add Bot Clicked');
+            if (socket && socket.connected) {
+                console.log('Emitting addBot');
+                socket.emit('addBot');
+            } else {
+                console.error('Socket not connected');
+            }
+        });
+        
+        document.getElementById('remove-bot-btn').addEventListener('click', () => {
+            console.log('Remove Bot Clicked');
+            if (socket && socket.connected) {
+                socket.emit('removeBot');
+            }
+        });
+        
+        document.getElementById('clear-bots-btn').addEventListener('click', () => {
+            console.log('Clear Bots Clicked');
+            if (socket && socket.connected) {
+                socket.emit('clearBots');
+            }
+        });
+
         // Apply Lyria configuration
         const applyLyriaConfigBtn = document.getElementById('apply-lyria-config');
         applyLyriaConfigBtn.addEventListener('click', async () => {
@@ -2230,7 +2566,23 @@ Generate ONE unified prompt that captures the blend. Respond with ONLY the promp
                 for (const id in players) {
                     const player = players[id];
                     const pulseData = getPlayerPulseOffset(id);
-                    const pulseAmount = pulseEnabled ? Math.sin((pulseTime * pulseData.speed) + pulseData.offset) * pulseData.amplitude : 0;
+                    
+                    // Use audio energy if available, otherwise fallback to sine wave
+                    let energyPulse = 0;
+                    if (window.audioPlayer && window.lyriaSession) {
+                        const energy = window.audioPlayer.getAudioEnergy();
+                        // Scale energy to visible pulse (e.g., 0-20px)
+                        // Combine with individual offset to keep variation
+                        energyPulse = energy * 15 * (0.8 + Math.sin(pulseData.offset) * 0.2); 
+                    }
+                    
+                    const sinePulse = Math.sin((pulseTime * pulseData.speed) + pulseData.offset) * pulseData.amplitude;
+                    
+                    // Mix simulations: mostly audio if active, otherwise sine
+                    const pulseAmount = pulseEnabled ? 
+                        (window.audioPlayer && window.lyriaSession ? Math.max(sinePulse * 0.3, energyPulse) : sinePulse) 
+                        : 0;
+
                     const pulsedSize = circleRadius + pulseAmount;
                     const shape = player.shape || 'circle';
                     
