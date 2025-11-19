@@ -8,10 +8,12 @@ const io = require('socket.io')(http, {
     }
 });
 const path = require('path');
-const fs = require('fs');
+
+// Import modules
+const physics = require('./physics');
+const gameState = require('./gameState');
 
 const PORT = process.env.PORT || 3000;
-const CONFIG_FILE = path.join(__dirname, 'config.json');
 
 // Serve static files
 app.use(express.static(__dirname));
@@ -24,218 +26,42 @@ app.get('/server-view', (req, res) => {
     res.sendFile(path.join(__dirname, 'server-view.html'));
 });
 
+app.get('/stats-view', (req, res) => {
+    res.sendFile(path.join(__dirname, 'stats-view.html'));
+});
+
 // Store connected players
 const players = {};
 let playerCounter = 0;
 
-// Load genres from config file or use defaults
-function loadGenres() {
-    try {
-        if (fs.existsSync(CONFIG_FILE)) {
-            const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-            if (config.genres && Array.isArray(config.genres) && config.genres.length === 8) {
-                console.log('Loaded genres from config.json');
-                return config.genres;
-            }
-        }
-    } catch (error) {
-        console.error('Error loading config.json:', error);
-    }
-    // Return defaults if file doesn't exist or is invalid
-    return ['TECHNO', 'ELECTRO', 'JAZZ', 'HIP HOP', 'CLASSICAL', 'HOUSE', 'AMBIENT', 'DRUM & BASS'];
-}
+// Store genre configuration
+let genres = gameState.loadGenres();
 
-// Save genres to config file (preserving other settings)
-function saveGenres(genresToSave) {
-    try {
-        // Load existing config to preserve other settings
-        let config = {};
-        if (fs.existsSync(CONFIG_FILE)) {
-            try {
-                config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-            } catch (parseError) {
-                console.warn('Could not parse existing config, creating new:', parseError);
-            }
-        }
-        
-        // Update only the genres property
-        config.genres = genresToSave;
-        
-        // Save back to file
-        fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
-        console.log('Genres saved to config.json (other settings preserved)');
-    } catch (error) {
-        console.error('Error saving config.json:', error);
-    }
-}
-
-// Store genre configuration (loaded from file or defaults)
-let genres = loadGenres();
-
-// Physics constants
-const BALL_RADIUS = 30;
-const FRICTION = 0.95;
-const BOUNCE_DAMPING = 0.8;
-const COLLISION_ELASTICITY = 0.7;
-const MAX_VELOCITY = 15;
-const PHYSICS_TICK_RATE = 60; // 60 times per second
 // Dynamic bounds - will be updated by server view
 let BOUNDS = {
     width: 1920,
     height: 1080
 };
 
-// All players get white color for minimal design
-function getRandomColor() {
-    return '#ffffff';
-}
-
-// Physics utility functions
-function distance(x1, y1, x2, y2) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
-
-// Check collision between two circles
-function checkCollision(p1, p2) {
-    const dist = distance(p1.position.x, p1.position.y, p2.position.x, p2.position.y);
-    return dist < (BALL_RADIUS * 2);
-}
-
-// Resolve collision between two balls
-function resolveCollision(p1, p2) {
-    const dx = p2.position.x - p1.position.x;
-    const dy = p2.position.y - p1.position.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    // Prevent division by zero
-    if (dist === 0) return;
-    
-    // Calculate collision normal
-    const nx = dx / dist;
-    const ny = dy / dist;
-    
-    // Separate overlapping balls
-    const overlap = (BALL_RADIUS * 2) - dist;
-    if (overlap > 0) {
-        const separationX = nx * overlap * 0.5;
-        const separationY = ny * overlap * 0.5;
-        
-        p1.position.x -= separationX;
-        p1.position.y -= separationY;
-        p2.position.x += separationX;
-        p2.position.y += separationY;
-    }
-    
-    // Calculate relative velocity
-    const dvx = p2.velocity.x - p1.velocity.x;
-    const dvy = p2.velocity.y - p1.velocity.y;
-    
-    // Calculate relative velocity in collision normal direction
-    const relativeVelocity = dvx * nx + dvy * ny;
-    
-    // Don't resolve if velocities are separating
-    if (relativeVelocity > 0) return;
-    
-    // Calculate impulse scalar
-    const impulse = -(1 + COLLISION_ELASTICITY) * relativeVelocity;
-    const impulseX = impulse * nx;
-    const impulseY = impulse * ny;
-    
-    // Apply impulse to both balls
-    p1.velocity.x -= impulseX * 0.5;
-    p1.velocity.y -= impulseY * 0.5;
-    p2.velocity.x += impulseX * 0.5;
-    p2.velocity.y += impulseY * 0.5;
-}
-
-// Physics update loop
-function updatePhysics() {
-    const playerIds = Object.keys(players);
-    
-    // Update velocities from input and apply friction
-    for (const id of playerIds) {
-        const player = players[id];
-        
-        if (!player.velocity) {
-            player.velocity = { x: 0, y: 0 };
-        }
-        
-        // Apply friction
-        player.velocity.x *= FRICTION;
-        player.velocity.y *= FRICTION;
-        
-        // Bot AI - Static (no wandering)
-        if (player.isBot) {
-            // Keep bots relatively stationary, just let them be pushed by collisions
-            // Apply stronger friction to make them settle quickly if pushed
-            player.velocity.x *= 0.9;
-            player.velocity.y *= 0.9;
-        }
-        
-        // Clamp velocity
-        const speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.y * player.velocity.y);
-        if (speed > MAX_VELOCITY) {
-            player.velocity.x = (player.velocity.x / speed) * MAX_VELOCITY;
-            player.velocity.y = (player.velocity.y / speed) * MAX_VELOCITY;
-        }
-        
-        // Update position based on velocity
-        player.position.x += player.velocity.x;
-        player.position.y += player.velocity.y;
-        
-        // Boundary collision with bounce
-        if (player.position.x - BALL_RADIUS < 0) {
-            player.position.x = BALL_RADIUS;
-            player.velocity.x = Math.abs(player.velocity.x) * BOUNCE_DAMPING;
-        }
-        if (player.position.x + BALL_RADIUS > BOUNDS.width) {
-            player.position.x = BOUNDS.width - BALL_RADIUS;
-            player.velocity.x = -Math.abs(player.velocity.x) * BOUNCE_DAMPING;
-        }
-        if (player.position.y - BALL_RADIUS < 0) {
-            player.position.y = BALL_RADIUS;
-            player.velocity.y = Math.abs(player.velocity.y) * BOUNCE_DAMPING;
-        }
-        if (player.position.y + BALL_RADIUS > BOUNDS.height) {
-            player.position.y = BOUNDS.height - BALL_RADIUS;
-            player.velocity.y = -Math.abs(player.velocity.y) * BOUNCE_DAMPING;
-        }
-    }
-    
-    // Check collisions between all pairs of players
-    for (let i = 0; i < playerIds.length; i++) {
-        for (let j = i + 1; j < playerIds.length; j++) {
-            const p1 = players[playerIds[i]];
-            const p2 = players[playerIds[j]];
-            
-            if (checkCollision(p1, p2)) {
-                resolveCollision(p1, p2);
-            }
-        }
-    }
-    
+// Physics loop
+function runPhysicsLoop() {
+    physics.updatePhysics(players, BOUNDS);
     // Broadcast updated positions to all clients
     io.emit('physicsUpdate', players);
 }
 
 // Start physics loop
-setInterval(updatePhysics, 1000 / PHYSICS_TICK_RATE);
+setInterval(runPhysicsLoop, 1000 / physics.PHYSICS_TICK_RATE);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     const isViewer = socket.handshake.query.viewer === 'true';
-    
+
     if (isViewer) {
         console.log(`Viewer connected: ${socket.id}`);
     } else {
         console.log(`Player connected: ${socket.id}`);
-        
+
         // Initialize new player with random position and color
         playerCounter++;
         players[socket.id] = {
@@ -248,7 +74,7 @@ io.on('connection', (socket) => {
                 y: Math.random() * (BOUNDS.height - 200) + 100
             },
             velocity: { x: 0, y: 0 },
-            color: getRandomColor()
+            color: gameState.getRandomColor()
         };
 
         // Send initialization data to the new player
@@ -263,7 +89,7 @@ io.on('connection', (socket) => {
 
     // Send all players to the new connection (player or viewer)
     socket.emit('players', players);
-    
+
     // Send current genres to the new connection
     socket.emit('genresUpdate', genres);
 
@@ -272,7 +98,7 @@ io.on('connection', (socket) => {
         if (players[socket.id]) {
             players[socket.id].name = name;
             console.log(`Player ${socket.id} set name to: ${name}`);
-            
+
             // Broadcast updated player list to all clients
             io.emit('players', players);
         }
@@ -283,7 +109,7 @@ io.on('connection', (socket) => {
         if (players[socket.id]) {
             players[socket.id].shape = shape;
             console.log(`Player ${socket.id} set shape to: ${shape}`);
-            
+
             // Broadcast updated player list to all clients
             io.emit('players', players);
         }
@@ -304,15 +130,15 @@ io.on('connection', (socket) => {
         if (isViewer) {
             BOUNDS.width = dimensions.width;
             BOUNDS.height = dimensions.height;
-            console.log(`Bounds updated to: ${BOUNDS.width}x${BOUNDS.height}`);
-            
+            // console.log(`Bounds updated to: ${BOUNDS.width}x${BOUNDS.height}`);
+
             // Clamp all existing players to new bounds
             for (const id in players) {
                 const player = players[id];
-                player.position.x = Math.max(BALL_RADIUS, Math.min(BOUNDS.width - BALL_RADIUS, player.position.x));
-                player.position.y = Math.max(BALL_RADIUS, Math.min(BOUNDS.height - BALL_RADIUS, player.position.y));
+                player.position.x = Math.max(physics.BALL_RADIUS, Math.min(BOUNDS.width - physics.BALL_RADIUS, player.position.x));
+                player.position.y = Math.max(physics.BALL_RADIUS, Math.min(BOUNDS.height - physics.BALL_RADIUS, player.position.y));
             }
-            
+
             // Broadcast bounds to all clients (including stats viewers)
             io.emit('boundsUpdate', { width: BOUNDS.width, height: BOUNDS.height });
         }
@@ -320,7 +146,6 @@ io.on('connection', (socket) => {
 
     // Handle prompt updates from server view - broadcast to all clients
     socket.on('promptUpdate', (prompt) => {
-        console.log('Prompt update received:', prompt);
         // Broadcast to all clients (especially stats dashboard)
         io.emit('promptUpdate', prompt);
     });
@@ -330,10 +155,10 @@ io.on('connection', (socket) => {
         if (isViewer && Array.isArray(newGenres) && newGenres.length === 8) {
             genres = newGenres.map(g => String(g).toUpperCase().trim());
             console.log('Genres updated to:', genres);
-            
+
             // Save genres to config file
-            saveGenres(genres);
-            
+            gameState.saveGenres(genres);
+
             // Broadcast updated genres to all clients
             io.emit('genresUpdate', genres);
         }
@@ -346,7 +171,7 @@ io.on('connection', (socket) => {
             // Reset velocity to zero when manually positioned
             players[data.playerId].velocity = { x: 0, y: 0 };
             console.log(`Updated position for player ${data.playerId}`);
-            
+
             // Broadcast updated positions to all clients
             io.emit('players', players);
         }
@@ -357,7 +182,7 @@ io.on('connection', (socket) => {
         if (isViewer) {
             const botId = `bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             playerCounter++;
-            
+
             players[botId] = {
                 id: botId,
                 playerNumber: playerCounter,
@@ -369,9 +194,9 @@ io.on('connection', (socket) => {
                     y: Math.random() * (BOUNDS.height - 200) + 100
                 },
                 velocity: { x: 0, y: 0 },
-                color: getRandomColor()
+                color: gameState.getRandomColor()
             };
-            
+
             console.log(`Bot added: ${botId}`);
             io.emit('players', players);
         }
@@ -410,7 +235,7 @@ io.on('connection', (socket) => {
         if (players[socket.id]) {
             console.log(`Player disconnected: ${socket.id}`);
             delete players[socket.id];
-            
+
             // Notify all players about the disconnection
             io.emit('playerDisconnected', socket.id);
         } else {
