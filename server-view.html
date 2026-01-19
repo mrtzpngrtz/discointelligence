@@ -120,6 +120,17 @@
         </div>
     </div>
 
+    <div id="bottom-controls">
+        <div class="bottom-controls-content">
+            <div class="control-label">SINGLE PLAYER:</div>
+            <div class="button-group">
+                <button id="add-bot-btn">+ ADD BUBBLE</button>
+                <button id="remove-bot-btn">- REMOVE</button>
+                <button id="clear-bots-btn">CLEAR ALL</button>
+            </div>
+        </div>
+    </div>
+
     <div id="prompt-ticker">
         <div class="ticker-wrapper">
             <span class="label">CURRENT PROMPT:</span>
@@ -140,21 +151,6 @@
     </div>
 
     <div id="menu">
-        <h3>SINGLE PLAYER</h3>
-        <div class="control-group">
-            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                <button id="add-bot-btn"
-                    style="flex: 1; padding: 10px; background: #ffffff; color: #000000; border: none; border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">+
-                    ADD BUBBLE</button>
-                <button id="remove-bot-btn"
-                    style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">-
-                    REMOVE</button>
-            </div>
-            <button id="clear-bots-btn"
-                style="width: 100%; margin-top: 5px; padding: 10px; background: rgba(255, 0, 0, 0.3); color: #ffffff; border: 1px solid rgba(255,0,0,0.5); border-radius: 3px; cursor: pointer; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: bold;">CLEAR
-                ALL BUBBLES</button>
-        </div>
-
         <h3>SETTINGS</h3>
 
         <div class="control-group">
@@ -351,6 +347,9 @@
     <!-- Canvas elements pushed via CSS when sidebar is open -->
     <canvas id="webgl-canvas"></canvas>
     <canvas id="canvas"></canvas>
+    
+    <!-- Genre Overlay for Direct Editing -->
+    <div id="genre-overlay"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="public/js/server-view.js"></script>

@@ -482,17 +482,18 @@ let currentPercentages = [0, 0, 0, 0, 0, 0, 0, 0];
 
 // Toggle stats logic
 
+// Grid dimensions (dynamic)
+let gridCols = 4;
+let gridRows = 2;
 
 // Calculate genre stats
 function updateStats(players) {
     const genreCounts = [0, 0, 0, 0, 0, 0, 0, 0];
     let totalPlayers = 0;
 
-    // Use current (potentially resized) canvas dimensions
-    const cols = 4;
-    const rows = 2;
-    const sectionWidth = canvas.width / cols;
-    const sectionHeight = canvas.height / rows;
+    // Use current dynamic grid dimensions
+    const sectionWidth = canvas.width / gridCols;
+    const sectionHeight = canvas.height / gridRows;
 
     for (const id in players) {
         const pos = players[id].position;
@@ -500,8 +501,8 @@ function updateStats(players) {
         const col = Math.floor(pos.x / sectionWidth);
         const row = Math.floor(pos.y / sectionHeight);
 
-        if (col >= 0 && col < cols && row >= 0 && row < rows) {
-            const idx = row * cols + col;
+        if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
+            const idx = row * gridCols + col;
             genreCounts[idx]++;
             totalPlayers++;
         }
@@ -578,6 +579,17 @@ function resizeCanvas() {
 
     canvas.width = availWidth;
     canvas.height = window.innerHeight;
+
+    // Determine grid layout based on screen width
+    // Mobile/Portrait: 2 columns x 4 rows
+    // Desktop/Landscape: 4 columns x 2 rows
+    if (availWidth < 768) {
+        gridCols = 2;
+        gridRows = 4;
+    } else {
+        gridCols = 4;
+        gridRows = 2;
+    }
 
     // Resize WebGL canvas
     webglCanvas.width = availWidth;
@@ -718,10 +730,10 @@ const fragmentShaderSource = `
         }
         
         // Add subtle animated background metaballs for ambient effect (reduced visibility)
-        circle(0.008, vec3(0.5), vec2(0.3, 0.4), vec2(0.15, 0.10));
-        circle(0.010, vec3(0.5), vec2(0.7, 0.3), vec2(0.08, 0.12));
-        circle(0.008, vec3(0.5), vec2(0.5, 0.7), vec2(0.12, 0.08));
-        circle(0.012, vec3(0.5), vec2(0.2, 0.6), vec2(0.10, 0.15));
+        // circle(0.008, vec3(0.5), vec2(0.3, 0.4), vec2(0.15, 0.10));
+        // circle(0.010, vec3(0.5), vec2(0.7, 0.3), vec2(0.08, 0.12));
+        // circle(0.008, vec3(0.5), vec2(0.5, 0.7), vec2(0.12, 0.08));
+        // circle(0.012, vec3(0.5), vec2(0.2, 0.6), vec2(0.10, 0.15));
         
         float shade = min(1.0, max(field / 256.0, 0.0));
         
@@ -810,11 +822,22 @@ let startTime = Date.now();
 let mouseX = window.innerWidth / 2;
 let mouseY = window.innerHeight / 2;
 
-// Track mouse movement for shader
+// Track mouse/touch movement for shader
+function updateShaderMouse(x, y) {
+    mouseX = x;
+    mouseY = window.innerHeight - y;  // Flip Y coordinate
+}
+
 webglCanvas.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = window.innerHeight - e.clientY;  // Flip Y coordinate
+    updateShaderMouse(e.clientX, e.clientY);
 });
+
+webglCanvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        updateShaderMouse(touch.clientX, touch.clientY);
+    }
+}, { passive: true });
 
 // Render WebGL metaballs
 function renderMetaballs() {
@@ -1260,26 +1283,22 @@ const targetPercentages = [0, 0, 0, 0, 0, 0, 0, 0];
 
 // Calculate which genre section a player is in
 function getPlayerGenre(x, y) {
-    const cols = 4;
-    const rows = 2;
-    const sectionWidth = canvas.width / cols;
-    const sectionHeight = canvas.height / rows;
+    const sectionWidth = canvas.width / gridCols;
+    const sectionHeight = canvas.height / gridRows;
     
     const col = Math.floor(x / sectionWidth);
     const row = Math.floor(y / sectionHeight);
     
-    if (col >= 0 && col < cols && row >= 0 && row < rows) {
-        return row * cols + col;
+    if (col >= 0 && col < gridCols && row >= 0 && row < gridRows) {
+        return row * gridCols + col;
     }
     return -1;
 }
 
 // Draw genre sections and dot grid background
 function drawGrid() {
-    const cols = 4;
-    const rows = 2;
-    const sectionWidth = canvas.width / cols;
-    const sectionHeight = canvas.height / rows;
+    const sectionWidth = canvas.width / gridCols;
+    const sectionHeight = canvas.height / gridRows;
     
     // Count players in each genre
     const genreCounts = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -1295,11 +1314,11 @@ function drawGrid() {
     }
     
     // Draw genre sections
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < gridRows; row++) {
+        for (let col = 0; col < gridCols; col++) {
             const x = col * sectionWidth;
             const y = row * sectionHeight;
-            const genreIndex = row * cols + col;
+            const genreIndex = row * gridCols + col;
             
             // Draw section border
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
@@ -1331,14 +1350,42 @@ function drawGrid() {
             // Draw genre label in upper left corner (offset for UI bar if top row)
             const labelY = row === 0 ? y + 70 : y + 20;
             ctx.fillStyle = '#ffffff';
-            ctx.font = '24px Helvetica, Arial, sans-serif';
+            // Adjust font size based on screen width - bigger as requested
+            const fontSize = window.innerWidth < 768 ? 22 : 32;
+            const lineHeight = fontSize * 1.2;
+            ctx.font = `${fontSize}px Helvetica, Arial, sans-serif`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            ctx.fillText(genres[genreIndex].toLowerCase(), x + 35, labelY); // Offset for bar
             
-            // Draw percentage text
-            ctx.font = '14px Helvetica, Arial, sans-serif';
-            ctx.fillText(`${Math.round(genrePercentages[genreIndex])}%`, x + 35, labelY + 28);
+            // Advanced text wrapping
+            const labelText = genres[genreIndex] ? genres[genreIndex].toLowerCase() : '';
+            const maxTextWidth = sectionWidth - 50; // Padding
+            const words = labelText.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxTextWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+
+            // Draw lines
+            for (let i = 0; i < lines.length; i++) {
+                ctx.fillText(lines[i], x + 35, labelY + (i * lineHeight));
+            }
+            
+            // Draw percentage text below the last line of text
+            // Increase percent size too for better readability
+            ctx.font = `bold ${fontSize * 0.7}px Helvetica, Arial, sans-serif`;
+            const percentageY = labelY + (lines.length * lineHeight) + 8;
+            ctx.fillText(`${Math.round(genrePercentages[genreIndex])}%`, x + 35, percentageY);
         }
     }
 }
@@ -1386,7 +1433,7 @@ let ringWidth = 4;
 let pulseEnabled = true;
 let fillEnabled = true;
 let solidFillEnabled = false;
-let namesEnabled = true;
+let namesEnabled = false;
 let webglEnabled = true;
 let playerRingsEnabled = false;
 
@@ -1596,10 +1643,10 @@ setInterval(() => {
 
 // Drag and drop functionality (variables declared at top with other state)
 
-canvas.addEventListener('mousedown', (e) => {
+function handleInputStart(x, y) {
     const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    const mouseX = x - rect.left;
+    const mouseY = y - rect.top;
 
     // Check if clicking on any player
     for (const id in players) {
@@ -1617,13 +1664,13 @@ canvas.addEventListener('mousedown', (e) => {
             break;
         }
     }
-});
+}
 
-canvas.addEventListener('mousemove', (e) => {
+function handleInputMove(x, y) {
     if (draggedPlayer) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const mouseX = x - rect.left;
+        const mouseY = y - rect.top;
 
         // Update player position
         if (players[draggedPlayer]) {
@@ -1637,8 +1684,8 @@ canvas.addEventListener('mousemove', (e) => {
     } else {
         // Update cursor when hovering over players
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const mouseX = x - rect.left;
+        const mouseY = y - rect.top;
 
         let overPlayer = false;
         for (const id in players) {
@@ -1655,9 +1702,9 @@ canvas.addEventListener('mousemove', (e) => {
 
         canvas.style.cursor = overPlayer ? 'grab' : 'default';
     }
-});
+}
 
-canvas.addEventListener('mouseup', () => {
+function handleInputEnd() {
     if (draggedPlayer && players[draggedPlayer]) {
         // Send updated position to server
         socket.emit('updatePlayerPosition', {
@@ -1667,11 +1714,34 @@ canvas.addEventListener('mouseup', () => {
     }
     draggedPlayer = null;
     canvas.style.cursor = 'default';
-});
+}
 
-canvas.addEventListener('mouseleave', () => {
-    draggedPlayer = null;
-    canvas.style.cursor = 'default';
+// Mouse events
+canvas.addEventListener('mousedown', (e) => handleInputStart(e.clientX, e.clientY));
+canvas.addEventListener('mousemove', (e) => handleInputMove(e.clientX, e.clientY));
+canvas.addEventListener('mouseup', handleInputEnd);
+canvas.addEventListener('mouseleave', handleInputEnd);
+
+// Touch events
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        handleInputStart(touch.clientX, touch.clientY);
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        handleInputMove(touch.clientX, touch.clientY);
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleInputEnd();
 });
 
 function draw() {

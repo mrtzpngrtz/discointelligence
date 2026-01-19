@@ -588,3 +588,151 @@ body.stats-open #canvas {
     outline: none;
     border-color: #ffffff;
 }
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    #ui-bar {
+        padding: 0 10px;
+        height: auto;
+        min-height: 50px;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    #ui-bar .left {
+        width: 100%;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
+    #ui-bar .right {
+        width: 100%;
+        justify-content: space-between;
+        padding-bottom: 5px;
+    }
+    
+    #ui-bar .title {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    #music-status {
+        display: none;
+    }
+    
+    #stats-sidebar {
+        width: 85%;
+        max-width: 300px;
+    }
+    
+    #menu {
+        width: 85%;
+        max-width: 300px;
+    }
+    
+    /* Improve touch targets */
+    #playback-controls button {
+        width: 36px;
+        height: 36px;
+    }
+    
+    #hamburger {
+        top: 15px; /* Move into header area or just below */
+        right: 15px;
+        position: fixed;
+        z-index: 105; /* Above UI bar */
+    }
+    
+    /* Adjust for when menu overlaps hamburger */
+    #menu.open ~ #hamburger span {
+        background: #fff;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #volume-control {
+        display: none; /* Hide volume on very small screens to save space */
+    }
+    
+    #ui-bar .title {
+        max-width: 150px;
+    }
+}
+
+/* Bottom Controls */
+#bottom-controls {
+    position: fixed;
+    bottom: 30px; /* Above prompt ticker */
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.85);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 97;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.bottom-controls-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.control-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+#add-bot-btn, #remove-bot-btn, #clear-bots-btn {
+    padding: 8px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+#add-bot-btn {
+    background: #ffffff;
+    color: #000000;
+    border: none;
+}
+
+#add-bot-btn:hover {
+    background: #dddddd;
+}
+
+#remove-bot-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+#remove-bot-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#clear-bots-btn {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 0, 0, 0.4);
+}
+
+#clear-bots-btn:hover {
+    background: rgba(255, 0, 0, 0.4);
+}

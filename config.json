@@ -2,7 +2,7 @@
   "genres": [
     "RHYTHM AND BLUES FROM THE MOON",
     "GERMAN RAP FROM THE 1980",
-    "ROLLING STONES REBORN",
+    "MUNICH FOLK MUSIC",
     "WAITING FOR CHRISTMAS",
     "BIRTH OF KETCHUP BY MAX RICHTER",
     "JAZZ IN THE BERLIN SUBWAY",
@@ -52,7 +52,7 @@
     "pulseEnabled": true,
     "fillEnabled": false,
     "solidFillEnabled": false,
-    "namesEnabled": true,
+    "namesEnabled": false,
     "webglEnabled": true,
     "playerRingsEnabled": false
   },
